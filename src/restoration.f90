@@ -1,5 +1,8 @@
 module restoration
 
+  ! WORK ARRAYS
+  real(8), allocatable, dimension(:) :: xprev
+
 contains
 
   !------------------------------------------------------------!
@@ -104,6 +107,7 @@ contains
     real(8) :: aepsfeas,cnorm,efacc,efstain,eoacc,eostain,epsopt,nlpsupn,snorm
 
     ! LOCAL ARRAYS
+    integer           :: i
     logical           :: coded(11),equatn(mor),linear(mor)
     real(8)           :: lambda(mor)
     character(len=15) :: strtmp
@@ -113,6 +117,8 @@ contains
     external :: r_evalf,r_evalg,r_evalh,r_evalc,r_evaljac,r_evalhc, &
          r_evalfc,r_evalgjac,r_evalgjacp,r_evalhl,r_evalhlp
 
+    ! TODO: check for errors
+    if ( .not. allocated(xprev) ) allocate(xprev(n))
 
     aepsfeas =  epsfeas
     epsopt   =  1.0D-08
@@ -133,10 +139,10 @@ contains
     equatn(1:m) = .false.
     linear(1:m) = .false.
 
-    ! 'Global' variable for the objective function in restoration
-    ! phase. This variable is located in 'engdata'.
-    engXPrev = x
-
+    do i = 1,n
+       xprev(i) = x(i)
+    end do
+    
     efstain   = sqrt(aepsfeas)
     eostain   = epsopt ** 1.5d0
 
@@ -159,75 +165,10 @@ contains
 
   end subroutine restoration
 
-  !------------------------------------------------------------!
-  ! SUBROUTINE CALLFREST                                       !
-  !                                                            !
-  ! This subroutine is used in the 'Restoration Phase'. The    !
-  ! main reason of its existence is to find feasible points    !
-  ! in a problem that does not have differentiable             !
-  ! constraints.                                               !
-  !                                                            !
-  ! This function is defined as the sum of the squares of the  !
-  ! infeasibilities.                                           !
-  !                                                            !
-  !------------------------------------------------------------!
-
-  subroutine callfrest(n,x,f)
-
-    use engdata
-
-    ! SCALAR ARGUMENTS
-    integer :: n
-    real(8) :: f
-
-    ! ARRAY ARGUMENTS
-    real(8) :: x(n)
-
-    intent(in ) :: n,x
-    intent(out) :: f
-
-    ! INTERFACES
-    interface
-       subroutine evalconstr(n,x,ind,c,flag)
-         integer :: flag,ind,n
-         real(8) :: c
-         real(8) :: x(n)
-
-         intent(in ) :: ind,n,x
-         intent(out) :: c,flag
-       end subroutine evalconstr
-    end interface
-
-    ! LOCAL SCALARS
-    integer :: flag,i,m
-    real(8) :: c
-    real(8),pointer :: gamma(:)
-
-    flag  =              0
-    gamma => engGetGamma()
-    m     =      engGetM()
-
-    f = 0.0D0
-    do i = 1,m
-       call evalconstr(n,x,i,c,flag)
-       numceval = numceval + 1
-
-       if ( flag .ne. 0 ) then
-          call engSetFlag(flag)
-          return
-       end if
-
-       f = f + max(0.0D0,c - gamma(i)) ** 2.0D0
-    end do
-
-  end subroutine callfrest
-
   ! ******************************************************************
   ! ******************************************************************
 
   subroutine r_evalf(n,x,f,flag)
-
-    use engdata, only : engXPrev
 
     implicit none
 
@@ -249,7 +190,7 @@ contains
     f = 0.0D0
 
     do i = 1,n
-       f = f + (x(i) - engXPrev(i)) ** 2
+       f = f + (x(i) - xprev(i)) ** 2
     end do
 
     f = 5.0D-01 * f
@@ -262,8 +203,6 @@ contains
   ! ******************************************************************
 
   subroutine r_evalg(n,x,g,flag)
-
-    use engdata, only : engXPrev
 
     implicit none
 
@@ -280,7 +219,7 @@ contains
     integer :: i
 
     do i = 1,n
-       g(i) = x(i) - engXPrev(i)
+       g(i) = x(i) - xprev(i)
     end do
 
     flag = 0
@@ -312,8 +251,6 @@ contains
 
   subroutine r_evalc(n,x,ind,c,flag)
 
-    use engdata, only : engGetGamma,numceval
-
     implicit none
 
     ! SCALAR ARGUMENTS
@@ -328,14 +265,14 @@ contains
 
     ! INTERFACES
     interface
-       subroutine evalconstr(n,x,ind,c,flag)
+       subroutine uevalc(n,x,ind,c,flag)
          integer :: flag,ind,n
          real(8) :: c
          real(8) :: x(n)
 
          intent(in ) :: ind,n,x
          intent(out) :: c,flag
-       end subroutine evalconstr
+       end subroutine uevalc
     end interface
 
     ! LOCAL SCALARS
@@ -347,8 +284,7 @@ contains
     gamma => engGetGamma()
     flag  =              0
 
-    call evalconstr(n,x,ind,c,flag)
-    numceval = numceval + 1
+    call uevalc(n,x,ind,c,flag)
 
     if ( flag .ne. 0 ) then
        return
@@ -365,8 +301,6 @@ contains
 
   subroutine r_evaljac(n,x,ind,jcvar,jcval,jcnnz,lim,lmem,flag)
 
-    use engdata
-
     implicit none
 
     ! SCALAR ARGUMENTS
@@ -382,13 +316,13 @@ contains
 
     ! INTERFACES
     interface
-       subroutine evaljacob(n,x,ind,jcvar,jcval,jcnnz,flag)
+       subroutine uevaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
          integer :: flag,ind,jcnnz,jcvar(n),n
          real(8) :: jcval(n),x(n)
 
          intent(in ) :: ind,n,x
          intent(out) :: flag,jcnnz,jcval,jcvar
-       end subroutine evaljacob
+       end subroutine uevaljac
     end interface
 
     ! LOCAL SCALARS
@@ -399,7 +333,7 @@ contains
 
     !  write(*,*) 'Entrou r_evaljac'
 
-    call evaljacob(n,x,ind,jcvar,jcval,jcnnz,flag)
+    call uevaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
 
     !  write(*,*) 'Saiu r_evaljac'
 
