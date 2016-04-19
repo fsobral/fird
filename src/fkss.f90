@@ -1,35 +1,23 @@
-subroutine fkss(n,x,l,u,me,mi,uevalf,uevalc,uevaljac,verbose)
+subroutine fkss(n,x,l,u,me,mi,evalf,evalc,uevaljac,verbose,flag)
 
   use filterirdfo
-  use restoration
 
   implicit none
 
   ! SCALAR ARGUMENTS
-  integer :: me,mi,n
+  integer :: flag,me,mi,n
   logical :: verbose
 
   ! ARRAY ARGUMENTS
   real(8) :: x(n)
 
   ! EXTERNAL SUBROUTINES
-  external :: uevalf,uevalc,uevaljac
-
-  ! LOCAL ARRAYS
-  real(8) :: y(n),z(n)
+  external :: evalf,evalc,evaljac
 
   ! LOCAL SCALARS
   integer :: flag
-  real(1) :: cfeas,rinfeas
+  real(1) :: beta,c,cfeas,rinfeas
 
-  ! ----------------- !
-  ! Feasibility phase !
-  ! ----------------- !
-
-  restore(n,x,l,u,me,mi,uevalc,uevaljac,cfeas,verbose,rinfeas,flag)
-
-  xinfeas = evalInfeas(n,x,me,mi,uevalc)
-
-  ! Verify convergence conditions
+  call dfoirfalg(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose)
 
 end subroutine fkss

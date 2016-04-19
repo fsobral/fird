@@ -1,5 +1,8 @@
 module restoration
 
+  ! EXTERNAL SUBROUTINES
+  external :: evalc,evaljac
+
   ! WORK ARRAYS
   real(8), allocatable, dimension(:) :: xprev
 
@@ -91,14 +94,6 @@ contains
          external :: fsub,gsub,hsub,csub,jacsub,hcsub,fcsub,gjacsub,gjacpsub, &
               hlsub,hlpsub
        end subroutine algencan
-       subroutine callfrest(n,x,f)
-         integer :: n
-         real(8) :: f
-         real(8) :: x(n)
-
-         intent(in ) :: n,x
-         intent(out) :: f
-       end subroutine callfrest
     end interface
 
     ! LOCAL SCALARS
@@ -117,32 +112,27 @@ contains
     external :: r_evalf,r_evalg,r_evalh,r_evalc,r_evaljac,r_evalhc, &
          r_evalfc,r_evalgjac,r_evalgjacp,r_evalhl,r_evalhlp
 
-    ! TODO: check for errors
-    if ( .not. allocated(xprev) ) allocate(xprev(n))
+    evalc   = uevalc
+    evaljac = uevaljac
 
     aepsfeas =  epsfeas
     epsopt   =  1.0D-08
 
     checkder = .false.
 
-    n = nor
-    m = mor
+    m = me + mi
 
     hnnzmax  = n ** 2
     jcnnzmax =  n * m
 
     coded(1:11) = .false.
-    coded(1: 2) =  .true.
     coded(4: 5) =  .true.
 
-    lambda(1:m) =   0.0D0
-    equatn(1:m) = .false.
-    linear(1:m) = .false.
+    lambda(     1: m) =  0.0D0
+    equatn(     1:me) = .false.
+    equatn(me + 1: m) = .false.
+    linear(     1: m) = .false.
 
-    do i = 1,n
-       xprev(i) = x(i)
-    end do
-    
     efstain   = sqrt(aepsfeas)
     eostain   = epsopt ** 1.5d0
 
@@ -187,15 +177,17 @@ contains
 
     !  write(*,*) 'Entrou r_evalf',x
 
-    f = 0.0D0
+!!$    f = 0.0D0
+!!$
+!!$    do i = 1,n
+!!$       f = f + (x(i) - xprev(i)) ** 2
+!!$    end do
+!!$
+!!$    f = 5.0D-01 * f
+!!$
+!!$    flag = 0
 
-    do i = 1,n
-       f = f + (x(i) - xprev(i)) ** 2
-    end do
-
-    f = 5.0D-01 * f
-
-    flag = 0
+    flag = -1
 
   end subroutine r_evalf
 
@@ -218,11 +210,13 @@ contains
     ! LOCAL SCALARS
     integer :: i
 
-    do i = 1,n
-       g(i) = x(i) - xprev(i)
-    end do
+!!$    do i = 1,n
+!!$       g(i) = x(i) - xprev(i)
+!!$    end do
+!!$
+!!$    flag = 0
 
-    flag = 0
+    flag = -1
 
   end subroutine r_evalg
 
@@ -265,14 +259,14 @@ contains
 
     ! INTERFACES
     interface
-       subroutine uevalc(n,x,ind,c,flag)
+       subroutine evalc(n,x,ind,c,flag)
          integer :: flag,ind,n
          real(8) :: c
          real(8) :: x(n)
 
          intent(in ) :: ind,n,x
          intent(out) :: c,flag
-       end subroutine uevalc
+       end subroutine evalc
     end interface
 
     ! LOCAL SCALARS
@@ -281,16 +275,13 @@ contains
 
     !  write(*,*) 'Entrou r_evalc'
 
-    gamma => engGetGamma()
-    flag  =              0
+    flag  =  0
 
-    call uevalc(n,x,ind,c,flag)
+    call evalc(n,x,ind,c,flag)
 
     if ( flag .ne. 0 ) then
        return
     end if
-
-    c = c - gamma(ind)
 
     !  write(*,*) 'Saiu r_evalc'
 
@@ -316,13 +307,13 @@ contains
 
     ! INTERFACES
     interface
-       subroutine uevaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
+       subroutine evaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
          integer :: flag,ind,jcnnz,jcvar(n),n
          real(8) :: jcval(n),x(n)
 
          intent(in ) :: ind,n,x
          intent(out) :: flag,jcnnz,jcval,jcvar
-       end subroutine uevaljac
+       end subroutine evaljac
     end interface
 
     ! LOCAL SCALARS
@@ -333,7 +324,7 @@ contains
 
     !  write(*,*) 'Entrou r_evaljac'
 
-    call uevaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
+    call evaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
 
     !  write(*,*) 'Saiu r_evaljac'
 
