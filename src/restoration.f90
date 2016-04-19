@@ -63,7 +63,7 @@ contains
     logical :: verbose
 
     ! ARRAY ARGUMENTS
-    real(8) :: l(nor),u(nor),x(nor)
+    real(8) :: l(n),u(n),x(n)
 
     intent(in   ) :: epsfeas,l,mor,nor,u,verbose
     intent(out  ) :: flag,infeas
@@ -98,7 +98,7 @@ contains
 
     ! LOCAL SCALARS
     logical :: checkder
-    integer :: hnnzmax,jcnnzmax,m,n,nvparam
+    integer :: hnnzmax,jcnnzmax,m,nvparam
     real(8) :: aepsfeas,cnorm,efacc,efstain,eoacc,eostain,epsopt,nlpsupn,snorm
 
     ! LOCAL ARRAYS

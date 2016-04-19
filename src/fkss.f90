@@ -1,6 +1,6 @@
 subroutine fkss(n,x,l,u,me,mi,evalf,evalc,uevaljac,verbose,flag)
 
-  use filterirdfo
+  use dfoirfilter
 
   implicit none
 
