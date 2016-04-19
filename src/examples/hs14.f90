@@ -1,5 +1,26 @@
 program FKSS
 
+  ! LOCAL SCALARS
+  integer :: flag,i,me,mi,n
+
+  ! LOCAL ARRAYS
+  real(8), allocatable :: l(:), u(:), x(:)
+
+  ! EXTERNAL SUBROUTINES
+  external :: evalf,evalc,evaljac
+
+  n  = 2
+  me = 1
+  mi = 1
+  
+  allocate(x(n),l(n),u(n))
+
+  verbose = .true.
+
+  call fkss(n,x,l,u,me,mi,evalf,evalc,uevaljac,verbose,flag)
+
+  deallocate(x,l,u)
+
 contains
 
 !------------------------------------------------------------!
