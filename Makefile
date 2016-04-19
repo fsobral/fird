@@ -60,6 +60,6 @@ hstests: all
 
 clean:
 	rm -vf *~ $(LIB)/* $(BIN)/* $(OBJ)/*
-#	$(foreach i,$(SRC) $(TES),$(MAKE) -C $(i) clean;)
+	$(foreach i,$(SRC),$(MAKE) -C $(i) clean;)
 
 .PHONY: lib all clean
