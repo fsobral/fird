@@ -1,10 +1,38 @@
 module restoration
 
   ! EXTERNAL SUBROUTINES
-  external :: evalc,evaljac
+  pointer :: evalc,evaljac
 
   ! WORK ARRAYS
   real(8), allocatable, dimension(:) :: xprev
+
+  ! INTERFACES
+
+  interface
+     subroutine evalc(n,x,ind,c,flag)
+       ! SCALAR ARGUMENTS
+       integer :: flag,ind,n
+       real(8) :: c
+       ! ARRAY ARGUMENTS
+       real(8) :: x(n)
+
+       intent(in ) :: ind,n,x
+       intent(out) :: c,flag
+     end subroutine evalc
+
+     subroutine evaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
+       ! SCALAR ARGUMENTS
+       integer :: flag,ind,jcnnz,n
+       ! ARRAY ARGUMENTS
+       integer :: jcvar(n)
+       real(8) :: jcval(n),x(n)
+
+       intent(in ) :: ind,n,x
+       intent(out) :: flag,jcnnz,jcval,jcvar
+     end subroutine evaljac
+  end interface
+
+  private
 
 contains
 
@@ -65,12 +93,12 @@ contains
     ! ARRAY ARGUMENTS
     real(8) :: l(n),u(n),x(n)
 
-    intent(in   ) :: epsfeas,l,mor,nor,u,verbose
+    intent(in   ) :: epsfeas,l,me,mi,n,u,verbose
     intent(out  ) :: flag,infeas
     intent(inout) :: x
 
     ! EXTERNAL SUBROUTINES
-    external uevalc,evaljac
+    external uevalc,uevaljac
 
     ! INTERFACES
     interface
@@ -103,17 +131,17 @@ contains
 
     ! LOCAL ARRAYS
     integer           :: i
-    logical           :: coded(11),equatn(mor),linear(mor)
-    real(8)           :: lambda(mor)
+    logical           :: coded(11),equatn(me + mi),linear(me + mi)
+    real(8)           :: lambda(me + mi)
     character(len=15) :: strtmp
     character(len=80) :: specfnm,outputfnm,vparam(10)
 
     ! EXTERNAL SUBROUTINES
-    external :: r_evalf,r_evalg,r_evalh,r_evalc,r_evaljac,r_evalhc, &
-         r_evalfc,r_evalgjac,r_evalgjacp,r_evalhl,r_evalhlp
+!    external :: r_evalf,r_evalg,r_evalh,r_evalc,r_evaljac,r_evalhc, &
+!         r_evalfc,r_evalgjac,r_evalgjacp,r_evalhl,r_evalhlp
 
-    evalc   = uevalc
-    evaljac = uevaljac
+    evalc   => uevalc
+    evaljac => uevaljac
 
     aepsfeas =  epsfeas
     epsopt   =  1.0D-08
@@ -153,7 +181,7 @@ contains
          checkder,infeas,cnorm,snorm,nlpsupn,flag)
 
 
-  end subroutine restoration
+  end subroutine restore
 
   ! ******************************************************************
   ! ******************************************************************

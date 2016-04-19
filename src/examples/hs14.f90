@@ -1,13 +1,13 @@
-program FKSS
+program FKSSMAIN
+
+  implicit none
 
   ! LOCAL SCALARS
   integer :: flag,i,me,mi,n
+  logical :: verbose  
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
-
-  ! EXTERNAL SUBROUTINES
-  external :: evalf,evalc,evaljac
 
   n  = 2
   me = 1
@@ -15,9 +15,17 @@ program FKSS
   
   allocate(x(n),l(n),u(n))
 
+  x(1) = 1.0D0
+  x(2) = 1.0D0
+
+  l(1) = - 10.0D0
+  l(2) = - 10.0D0
+  u(1) =   10.0D0
+  u(2) =   10.0D0
+
   verbose = .true.
 
-  call fkss(n,x,l,u,me,mi,evalf,evalc,uevaljac,verbose,flag)
+  call fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,flag)
 
   deallocate(x,l,u)
 
@@ -118,4 +126,4 @@ contains
 
   end subroutine evaljac
 
-end program FKSS
+end program FKSSMAIN

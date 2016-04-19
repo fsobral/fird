@@ -1,4 +1,4 @@
-subroutine fkss(n,x,l,u,me,mi,evalf,evalc,uevaljac,verbose,flag)
+subroutine fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,flag)
 
   use dfoirfilter
 
@@ -9,14 +9,10 @@ subroutine fkss(n,x,l,u,me,mi,evalf,evalc,uevaljac,verbose,flag)
   logical :: verbose
 
   ! ARRAY ARGUMENTS
-  real(8) :: x(n)
+  real(8) :: l(n),u(n),x(n)
 
   ! EXTERNAL SUBROUTINES
   external :: evalf,evalc,evaljac
-
-  ! LOCAL SCALARS
-  integer :: flag
-  real(1) :: beta,c,cfeas,rinfeas
 
   call dfoirfalg(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose)
 
