@@ -160,7 +160,7 @@ contains
     coded(4: 5) =  .true.
 
     lambda(     1: m) =  0.0D0
-    equatn(     1:me) = .false.
+    equatn(     1:me) =  .true.
     equatn(me + 1: m) = .false.
     linear(     1: m) = .false.
 
@@ -174,7 +174,7 @@ contains
     specfnm   = ''
 
     nvparam   = 1
-    vparam(1)    = 'IGNORE-OBJECTIVE-FUNCTION'
+    vparam(1) = 'IGNORE-OBJECTIVE-FUNCTION'
 
     ! Optimize
 

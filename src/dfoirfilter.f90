@@ -4,6 +4,12 @@ module dfoirfilter
 
   ! PARAMETERS
   real(8), parameter :: BETA = 1.0D-4
+  real(8), parameter :: ALPHA = 1.0D-1
+  real(8), parameter :: DELMIN = 1.0D-12
+  real(8), parameter :: MU = 1.0D-1
+  real(8), parameter :: ETA = 2.5D-1
+  ! Maximum number of filter elements
+  integer, parameter :: MAXNF = 1000
 
   ! SCALARS
   integer :: ncev,nfev,njev
@@ -71,11 +77,13 @@ contains
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
-    real(8) :: rl(n),ru(n),y(n),z(n)
+    real(8) :: ffilter(MAXNF),hfilter(MACNF),rl(n),ru(n),y(n),z(n)
 
     ! LOCAL SCALARS
-    integer :: flag,i,m
+    integer :: flag,i,m,nf
     real(8) :: c,cfeas,hxnorm,hznorm,rinfeas
+
+    nf = 1
 
     nfev = 0
     ncev = 0
@@ -91,9 +99,13 @@ contains
     ! TODO: check for errors when allocating
 
     hxnorm = 0.0D0
-    do i = 1,m
+    do i = 1,me
        call uevalc(n,x,i,c,flag)
        hxnorm = max(hxnorm, abs(c))
+    end do
+    do i = me + 1,m
+       call uevalc(n,x,i,c,flag)
+       hxnorm = max(hxnorm, max(0.0D0, c))
     end do
 
     write(*,*) 'HXNORM=',hxnorm
@@ -103,14 +115,23 @@ contains
     ! Feasibility phase !
     ! ----------------- !
 
-    do i = 1,n
-       rl(i) = max(l(i),x(i) - BETA * hxnorm)
-       ru(i) = min(u(i),x(i) + BETA * hxnorm)
-    end do
+    if ( hxnorm .gt. epsfeas ) then
 
-    call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
+       do i = 1,n
+          rl(i) = max(l(i),x(i) - BETA * hxnorm)
+          ru(i) = min(u(i),x(i) + BETA * hxnorm)
+       end do
 
-    write(*,*) 'HZNORM=',hznorm
+       cfeas = 9.5D-1 * (1.0D0 - ALPHA) * hxnorm
+
+       call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
+
+       write(*,*) 'HZNORM=',hznorm
+
+       ! TODO: Test alpha and filter conditions. In case of failure,
+       ! decrease feasibility tolerance.
+
+    end if
 
 !!$    hznorm = 0.0D0
 !!$    do i = 1,m
