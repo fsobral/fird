@@ -50,6 +50,8 @@ module dfoirfilter
 
   private
 
+  public :: dfoirfalg
+
 contains
 
   subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_,verbose)
@@ -73,7 +75,7 @@ contains
 
     ! LOCAL SCALARS
     integer :: flag,i,m
-    real(8) :: beta,c,cfeas,hxnorm,hznorm,rinfeas
+    real(8) :: c,cfeas,hxnorm,hznorm,rinfeas
 
     nfev = 0
     ncev = 0
@@ -91,8 +93,11 @@ contains
     hxnorm = 0.0D0
     do i = 1,m
        call uevalc(n,x,i,c,flag)
-       hxnorm = max(hxnorm, c)
+       hxnorm = max(hxnorm, abs(c))
     end do
+
+    write(*,*) 'HXNORM=',hxnorm
+    write(*,*) 'BETA=',BETA
 
     ! ----------------- !
     ! Feasibility phase !
@@ -103,13 +108,15 @@ contains
        ru(i) = min(u(i),x(i) + BETA * hxnorm)
     end do
 
-    call restore(n,x,rl,ru,me,mi,evalc,evaljac,cfeas,verbose,BETA * hxnorm,flag)
+    call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
 
-    hznorm = 0.0D0
-    do i = 1,m
-       call uevalc(n,x,i,c,flag)
-       hznorm = max(hznorm, c)
-    end do
+    write(*,*) 'HZNORM=',hznorm
+
+!!$    hznorm = 0.0D0
+!!$    do i = 1,m
+!!$       call uevalc(n,x,i,c,flag)
+!!$       hznorm = max(hznorm, c)
+!!$    end do
 
     ! Verify convergence conditions
 

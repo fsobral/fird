@@ -15,8 +15,8 @@ program FKSSMAIN
   
   allocate(x(n),l(n),u(n))
 
-  x(1) = 1.0D0
-  x(2) = 1.0D0
+  x(1) = 9.0D0
+  x(2) = 9.0D0
 
   l(1) = - 10.0D0
   l(2) = - 10.0D0

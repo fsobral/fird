@@ -34,6 +34,8 @@ module restoration
 
   private
 
+  public :: restore
+
 contains
 
   !------------------------------------------------------------!
@@ -98,7 +100,7 @@ contains
     intent(inout) :: x
 
     ! EXTERNAL SUBROUTINES
-    external uevalc,uevaljac
+    external :: uevalc,uevaljac
 
     ! INTERFACES
     interface
@@ -154,6 +156,7 @@ contains
     jcnnzmax =  n * m
 
     coded(1:11) = .false.
+    coded(   1) =  .true.
     coded(4: 5) =  .true.
 
     lambda(     1: m) =  0.0D0
@@ -170,7 +173,8 @@ contains
     outputfnm = ''
     specfnm   = ''
 
-    nvparam   = 0
+    nvparam   = 1
+    vparam(1)    = 'IGNORE-OBJECTIVE-FUNCTION'
 
     ! Optimize
 
@@ -285,18 +289,6 @@ contains
     intent(in ) :: ind,n,x
     intent(out) :: c,flag
 
-    ! INTERFACES
-    interface
-       subroutine evalc(n,x,ind,c,flag)
-         integer :: flag,ind,n
-         real(8) :: c
-         real(8) :: x(n)
-
-         intent(in ) :: ind,n,x
-         intent(out) :: c,flag
-       end subroutine evalc
-    end interface
-
     ! LOCAL SCALARS
     integer         :: i
     real(8),pointer :: gamma(:)
@@ -332,17 +324,6 @@ contains
 
     intent(in ) :: ind,lim,n,x
     intent(out) :: flag,jcnnz,jcval,jcvar,lmem
-
-    ! INTERFACES
-    interface
-       subroutine evaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
-         integer :: flag,ind,jcnnz,jcvar(n),n
-         real(8) :: jcval(n),x(n)
-
-         intent(in ) :: ind,n,x
-         intent(out) :: flag,jcnnz,jcval,jcvar
-       end subroutine evaljac
-    end interface
 
     ! LOCAL SCALARS
     integer :: i,m

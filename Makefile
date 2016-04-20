@@ -9,20 +9,21 @@ BIN = $(FKSS_HOME)/bin
 OBJ = $(FKSS_HOME)/objects
 
 ifndef PROBLEM
-   PROBLEM = tests/examples/trdf_main.f
+   PROBLEM = tests/examples/hs14.f90
 endif
 
 # Compiler options
 
 CC  = gcc
 FC  = gfortran
-FCC = "-xf77-cpp-input"
+FCC = 
 
 # Solver configuration parameters
 
 SOLVERLIB = /opt/tango/algencan-3.0.0/lib
 SOLVER_INTERFACE = algencan_solver
-SLOPTS = -lalgencan -ltrdf
+# The following order do matters!
+SLOPTS = -ldfoirfilter -lalgencan 
 
 # Linking options
 
@@ -30,20 +31,20 @@ LOPTS = $(SLOPTS)
 
 export
 
-all: lib solver
+all: lib
 
 # Generate the main FKSS library
 lib:
 	$(MAKE) -C $(SRC) all install
 
 # Generate the solver interface object
-solver:
-	$(MAKE) -C $(SOL) install
+#solver:
+#	$(MAKE) -C $(SOL) install
 
 # User-defined executable
-trdf: all
-	$(FC) -L$(SOLVERLIB) -L$(LIB) $(OBJ)/solver.o \
-	$(FCC) -I$(SRC) $(PROBLEM) $(LOPTS) -o $(BIN)/$@
+fkss: all
+	$(FC) -L$(SOLVERLIB) -L$(LIB) \
+	$(FCC) $(PROBLEM) $(LOPTS) -o $(BIN)/$@
 
 # User-defined C executable
 c_trdf: all

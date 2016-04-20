@@ -2,8 +2,11 @@ install:
 	mkdir -p $(LIB)
 	mv libdfoirfilter.a $(LIB)
 
-all: dfoirfilter.o restoration.o dfoirfilter.mod restoration.mod
+all: dfoirfilter.o restoration.o fkss.o
 	ar crv libdfoirfilter.a $^
+
+fkss.o: fkss.f90 dfoirfilter.o
+	$(FC) -c $< -o $@
 
 dfoirfilter.o: dfoirfilter.f90 restoration.o
 	$(FC) -c $< -o $@
