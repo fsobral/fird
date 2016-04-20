@@ -117,7 +117,7 @@ contains
 
     if ( hxnorm .gt. epsfeas ) then
 
-       do i = 1,n
+010    do i = 1,n
           rl(i) = max(l(i),x(i) - BETA * hxnorm)
           ru(i) = min(u(i),x(i) + BETA * hxnorm)
        end do
@@ -131,6 +131,13 @@ contains
        ! TODO: Test alpha and filter conditions. In case of failure,
        ! decrease feasibility tolerance.
 
+       if ( hznorm .gt. (1.0D0 - ALPHA) * hxnorm) goto 010
+
+       do i = 1,nf - 1
+          if ( hznorm .gt. (1.0D0 - ALPHA) * hfilter(i) ) goto 010
+          if ( fz .gt. ffilter(i) + ALPHA * hxnorm ) goto 010
+       end do
+       
     end if
 
 !!$    hznorm = 0.0D0
