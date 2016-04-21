@@ -8,8 +8,8 @@ module dfoirfilter
   real(8), parameter :: DELMIN = 1.0D-12
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
-  ! Maximum number of filter elements
-  integer, parameter :: MAXNF = 1000
+  ! Maximum number of iterations
+  integer, parameter :: MAXITER = 2
 
   ! SCALARS
   integer :: ncev,nfev,njev
@@ -78,11 +78,13 @@ contains
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
-    real(8) :: ffilter(MAXNF),hfilter(MAXNF),rl(n),ru(n),y(n),z(n)
+    real(8) :: ffilter(MAXITER),hfilter(MAXITER),rl(n),ru(n),y(n),z(n)
 
     ! LOCAL SCALARS
     integer :: i,iter,m,nf
     real(8) :: c,cfeas,fx,fxnew,fz,hxnorm,hznorm,rinfeas
+
+    iter = 1
 
     nf = 1
 
@@ -99,8 +101,6 @@ contains
     ! Initialization
     ! TODO: check for errors when allocating
 
-    if ( verbose ) write(*,900) iter
-
     hxnorm = 0.0D0
     do i = 1,me
        call uevalc(n,x,i,c,flag)
@@ -111,67 +111,75 @@ contains
        hxnorm = max(hxnorm, max(0.0D0, c))
     end do
 
-    write(*,*) 'HXNORM=',hxnorm
-    write(*,*) 'BETA=',BETA
+    call uevalf(n,x,fx,flag)
 
-    ! ----------------- !
-    ! Feasibility phase !
-    ! ----------------- !
+    do while ( iter .le. MAXITER )
 
-    if ( hxnorm .gt. epsfeas ) then
+       if ( verbose ) write(*,900) iter
 
-010    do i = 1,n
-          rl(i) = max(l(i),x(i) - BETA * hxnorm)
-          ru(i) = min(u(i),x(i) + BETA * hxnorm)
-       end do
+       write(*,*) 'HXNORM=',hxnorm
+       write(*,*) 'BETA=',BETA
 
-       cfeas = 9.5D-1 * (1.0D0 - ALPHA) * hxnorm
+       ! ----------------- !
+       ! Feasibility phase !
+       ! ----------------- !
 
-       call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
+       if ( hxnorm .gt. epsfeas ) then
 
-       call uevalf(n,x,fz,flag)
+010       do i = 1,n
+             rl(i) = max(l(i),x(i) - BETA * hxnorm)
+             ru(i) = min(u(i),x(i) + BETA * hxnorm)
+          end do
 
-       write(*,*) 'HZNORM=',hznorm
+          cfeas = 9.5D-1 * (1.0D0 - ALPHA) * hxnorm
 
-       ! TODO: Test alpha and filter conditions. In case of failure,
-       ! decrease feasibility tolerance.
+          call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
 
-       if ( hznorm .ge. (1.0D0 - ALPHA) * hxnorm .and. &
-            fz .ge. fx - ALPHA * hxnorm ) goto 010
+          call uevalf(n,x,fz,flag)
 
-       do i = 1,nf - 1
-          if ( hznorm .ge. (1.0D0 - ALPHA) * hfilter(i) .and. &
-               fz .ge. ffilter(i) - ALPHA * hfilter(i) ) goto 010
-       end do
-       
-    end if
+          write(*,*) 'HZNORM=',hznorm
 
-    ! Verify convergence conditions
+          ! TODO: Test alpha and filter conditions. In case of failure,
+          ! decrease feasibility tolerance.
 
-    ! ------------- !
-    ! Filter Update !
-    ! ------------- !
+          if ( hznorm .ge. (1.0D0 - ALPHA) * hxnorm .and. &
+               fz .ge. fx - ALPHA * hxnorm ) goto 010
 
-    if ( fxnew .ge. fx ) then
+          do i = 1,nf - 1
+             if ( hznorm .ge. (1.0D0 - ALPHA) * hfilter(i) .and. &
+                  fz .ge. ffilter(i) - ALPHA * hfilter(i) ) goto 010
+          end do
 
-       ! This is an h-iteration
-       nf          = nf + 1
-       ffilter(nf) =     fx
-       hfilter(nf) = hxnorm
+       end if
 
-       if ( verbose ) write(*,901) fx, hxnorm
+       ! Verify convergence conditions
 
-    else
-       
-       if ( verbose ) write(*,902)
+       ! ------------- !
+       ! Filter Update !
+       ! ------------- !
 
-    end if
+       if ( fxnew .ge. fx ) then
 
-    ! Prepare for next iteration !
+          ! This is an h-iteration
+          nf          = nf + 1
+          ffilter(nf) =     fx
+          hfilter(nf) = hxnorm
 
-    fx = fxnew
+          if ( verbose ) write(*,901) fx, hxnorm
 
-    iter = iter + 1
+       else
+
+          if ( verbose ) write(*,902)
+
+       end if
+
+       ! Prepare for next iteration !
+
+       fx = fxnew
+
+       iter = iter + 1
+
+    end do
 
     ! NON-EXECUTABLE STATEMENTS
     
