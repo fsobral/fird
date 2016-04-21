@@ -60,15 +60,16 @@ module dfoirfilter
 
 contains
 
-  subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_,verbose)
+  subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_,verbose,epsfeas,epsopt,flag)
 
     use restoration
 
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: me,mi,n
+    integer :: flag,me,mi,n
     logical :: verbose
+    real(8) :: epsfeas,epsopt
 
     ! ARRAY ARGUMENTS
     real(8) :: l(n),u(n),x(n)
@@ -77,11 +78,11 @@ contains
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
-    real(8) :: ffilter(MAXNF),hfilter(MACNF),rl(n),ru(n),y(n),z(n)
+    real(8) :: ffilter(MAXNF),hfilter(MAXNF),rl(n),ru(n),y(n),z(n)
 
     ! LOCAL SCALARS
-    integer :: flag,i,m,nf
-    real(8) :: c,cfeas,hxnorm,hznorm,rinfeas
+    integer :: i,iter,m,nf
+    real(8) :: c,cfeas,fx,fxnew,fz,hxnorm,hznorm,rinfeas
 
     nf = 1
 
@@ -97,6 +98,8 @@ contains
 
     ! Initialization
     ! TODO: check for errors when allocating
+
+    if ( verbose ) write(*,900) iter
 
     hxnorm = 0.0D0
     do i = 1,me
@@ -126,31 +129,55 @@ contains
 
        call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
 
+       call uevalf(n,x,fz,flag)
+
        write(*,*) 'HZNORM=',hznorm
 
        ! TODO: Test alpha and filter conditions. In case of failure,
        ! decrease feasibility tolerance.
 
-       if ( hznorm .gt. (1.0D0 - ALPHA) * hxnorm) goto 010
+       if ( hznorm .ge. (1.0D0 - ALPHA) * hxnorm .and. &
+            fz .ge. fx - ALPHA * hxnorm ) goto 010
 
        do i = 1,nf - 1
-          if ( hznorm .gt. (1.0D0 - ALPHA) * hfilter(i) ) goto 010
-          if ( fz .gt. ffilter(i) + ALPHA * hxnorm ) goto 010
+          if ( hznorm .ge. (1.0D0 - ALPHA) * hfilter(i) .and. &
+               fz .ge. ffilter(i) - ALPHA * hfilter(i) ) goto 010
        end do
        
     end if
 
-!!$    hznorm = 0.0D0
-!!$    do i = 1,m
-!!$       call uevalc(n,x,i,c,flag)
-!!$       hznorm = max(hznorm, c)
-!!$    end do
-
     ! Verify convergence conditions
+
+    ! ------------- !
+    ! Filter Update !
+    ! ------------- !
+
+    if ( fxnew .ge. fx ) then
+
+       ! This is an h-iteration
+       nf          = nf + 1
+       ffilter(nf) =     fx
+       hfilter(nf) = hxnorm
+
+       if ( verbose ) write(*,901) fx, hxnorm
+
+    else
+       
+       if ( verbose ) write(*,902)
+
+    end if
+
+    ! Prepare for next iteration !
+
+    fx = fxnew
+
+    iter = iter + 1
 
     ! NON-EXECUTABLE STATEMENTS
     
-600 FORMAT('Iteration',1X,I10,/)
+900 FORMAT('Iteration',1X,I10,/)
+901 FORMAT(1X,'H-iteration: the pair (',E9.1,',',E9.1,') was added.',/)
+902 FORMAT(1X,'F-iteration.',/)
 
   end subroutine dfoirfalg
 
