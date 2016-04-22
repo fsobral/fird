@@ -117,23 +117,27 @@ contains
 
        if ( verbose ) write(*,900) iter
 
+       write(*,*) 'FX=',fx
        write(*,*) 'HXNORM=',hxnorm
        write(*,*) 'BETA=',BETA
+       write(*,904) (x(i), i = 1,n)
 
        ! ----------------- !
        ! Feasibility phase !
        ! ----------------- !
 
+       cfeas = (1.0D0 - ALPHA) * hxnorm
+
        if ( hxnorm .gt. epsfeas ) then
 
-010       do i = 1,n
-             rl(i) = max(l(i),x(i) - BETA * hxnorm)
-             ru(i) = min(u(i),x(i) + BETA * hxnorm)
-          end do
+!!$          do i = 1,n
+!!$             rl(i) = max(l(i),x(i) - BETA * hxnorm)
+!!$             ru(i) = min(u(i),x(i) + BETA * hxnorm)
+!!$          end do
 
-          cfeas = 9.5D-1 * (1.0D0 - ALPHA) * hxnorm
+010       cfeas = 9.5D-1 * cfeas
 
-          call restore(n,x,rl,ru,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
+          call restore(n,x,l,u,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
 
           call uevalf(n,x,fz,flag)
 
@@ -151,6 +155,8 @@ contains
           end do
 
        end if
+
+       write(*,903) (x(i), i = 1,n)
 
        ! Verify convergence conditions
 
@@ -186,6 +192,8 @@ contains
 900 FORMAT('Iteration',1X,I10,/)
 901 FORMAT(1X,'H-iteration: the pair (',E9.1,',',E9.1,') was added.',/)
 902 FORMAT(1X,'F-iteration.',/)
+903 FORMAT(1X,'Restored point:',/6X,3(1X,D21.8))
+904 FORMAT(1X,'Current point:',/6X,3(1X,D21.8))
 
   end subroutine dfoirfalg
 

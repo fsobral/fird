@@ -4,7 +4,7 @@ module restoration
   pointer :: evalc,evaljac
 
   ! WORK ARRAYS
-  real(8), allocatable, dimension(:) :: xprev
+  real(8), dimension(:), pointer :: xprev
 
   ! INTERFACES
 
@@ -134,9 +134,11 @@ contains
     ! LOCAL ARRAYS
     integer           :: i
     logical           :: coded(11),equatn(me + mi),linear(me + mi)
-    real(8)           :: lambda(me + mi)
+    real(8)           :: lambda(me + mi),xp(n)
     character(len=15) :: strtmp
     character(len=80) :: specfnm,outputfnm,vparam(10)
+
+    target :: xp
 
     ! EXTERNAL SUBROUTINES
 !    external :: r_evalf,r_evalg,r_evalh,r_evalc,r_evaljac,r_evalhc, &
@@ -144,6 +146,11 @@ contains
 
     evalc   => uevalc
     evaljac => uevaljac
+
+    xprev => xp
+    do i = 1,n
+       xprev(i) = x(i)
+    end do
 
     aepsfeas =  epsfeas
     epsopt   =  1.0D-08
@@ -156,7 +163,7 @@ contains
     jcnnzmax =  n * m
 
     coded(1:11) = .false.
-    coded(   1) =  .true.
+    coded(1: 3) =  .true.
     coded(4: 5) =  .true.
 
     lambda(     1: m) =  0.0D0
@@ -173,8 +180,8 @@ contains
     outputfnm = ''
     specfnm   = ''
 
-    nvparam   = 1
-    vparam(1) = 'IGNORE-OBJECTIVE-FUNCTION'
+    nvparam   = 0
+!    vparam(1) = 'IGNORE-OBJECTIVE-FUNCTION'
 
     ! Optimize
 
@@ -209,17 +216,17 @@ contains
 
     !  write(*,*) 'Entrou r_evalf',x
 
-!!$    f = 0.0D0
-!!$
-!!$    do i = 1,n
-!!$       f = f + (x(i) - xprev(i)) ** 2
-!!$    end do
-!!$
-!!$    f = 5.0D-01 * f
-!!$
-!!$    flag = 0
+    f = 0.0D0
 
-    flag = -1
+    do i = 1,n
+       f = f + (x(i) - xprev(i)) ** 2
+    end do
+
+    f = 5.0D-01 * f
+
+    flag = 0
+
+!    flag = -1
 
   end subroutine r_evalf
 
@@ -242,13 +249,13 @@ contains
     ! LOCAL SCALARS
     integer :: i
 
-!!$    do i = 1,n
-!!$       g(i) = x(i) - xprev(i)
-!!$    end do
-!!$
-!!$    flag = 0
+    do i = 1,n
+       g(i) = x(i) - xprev(i)
+    end do
 
-    flag = -1
+    flag = 0
+
+!    flag = -1
 
   end subroutine r_evalg
 
@@ -267,8 +274,18 @@ contains
     intent(in ) :: lim,n,x
     intent(out) :: flag,lmem,hcol,hrow,hnnz,hval
 
+    ! LOCAL SCALARS
+    integer :: i
+
     lmem = .false.
-    flag = - 1
+
+    do i = 1,n
+       hcol(i) = i
+       hrow(i) = i
+       hval(i) = 1.0D0
+    end do
+
+    flag = 0
 
   end subroutine r_evalh
 
