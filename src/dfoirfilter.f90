@@ -11,6 +11,10 @@ module dfoirfilter
   ! Maximum number of iterations
   integer, parameter :: MAXITER = 2
 
+  ! ARRAYS
+  integer, allocatable :: linpos(:),linvar(:)
+  real(8), allocatable :: linrhs(:),linval(:)
+
   ! SCALARS
   integer :: ncev,nfev,njev
 
@@ -78,11 +82,11 @@ contains
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
-    real(8) :: ffilter(MAXITER),hfilter(MAXITER),rl(n),ru(n),y(n),z(n)
+    real(8) :: ffilter(MAXITER),hfilter(MAXITER),rl(n),ru(n),y(n),z(n),zd(n)
 
     ! LOCAL SCALARS
-    integer :: i,iter,m,nf
-    real(8) :: c,cfeas,fx,fxnew,fz,hxnorm,hznorm,rinfeas
+    integer :: i,j,k,iter,jcnnz,m,nf
+    real(8) :: c,cfeas,dnorm,fx,fxnew,fz,hxnorm,hznorm,hzdnorm,nzdnorm
 
     iter = 1
 
@@ -101,19 +105,13 @@ contains
     ! Initialization
     ! TODO: check for errors when allocating
 
-    hxnorm = 0.0D0
-    do i = 1,me
-       call uevalc(n,x,i,c,flag)
-       hxnorm = max(hxnorm, abs(c))
-    end do
-    do i = me + 1,m
-       call uevalc(n,x,i,c,flag)
-       hxnorm = max(hxnorm, max(0.0D0, c))
-    end do
+    allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
+
+    hxnorm = evalinfeas(n,x,me,mi,flag)
 
     call uevalf(n,x,fx,flag)
 
-    do while ( iter .le. MAXITER )
+    do while ( .true. )
 
        if ( verbose ) write(*,900) iter
 
@@ -158,7 +156,45 @@ contains
 
        write(*,903) (x(i), i = 1,n)
 
+       ! --------------- !
+       ! Optmality phase !
+       ! --------------- !
+
+       ! Construct the linear system
+
+       k = 1
+
+       do i = 1,m
+          call evalc(n,x,i,linrhs(i),flag)
+          linrhs(i) = - linrhs(i)
+
+          call uevaljac(n,x,i,linvar(k),linval(k),jcnnz,flag)
+          linpos(i) = k
+
+          k = k + jcnnz
+       end do
+
+       linpos(m + 1) = k
+
+       ! Solve the subproblem
+
        ! Verify convergence conditions
+
+       if ( hzdnorm .le. epsfeas .and. &
+            nzdnorm .le. epsopt ) then
+          flag = 0
+          exit
+       end if
+
+       dnorm = 0.0D0
+       do i = 1,n
+          dnorm = max(dnorm, abs(z(i) - zd(i)))
+       end do
+       
+       if ( dnorm .le. epsopt ) then
+          flag = 1
+          exit
+       end if
 
        ! ------------- !
        ! Filter Update !
@@ -183,9 +219,19 @@ contains
 
        fx = fxnew
 
+       hxnorm = evalinfeas(n,x,me,mi,flag)
+       
        iter = iter + 1
 
+       if ( iter .gt. MAXITER ) then
+          flag = 2
+          exit
+       end if
+
     end do
+
+    deallocate(linrhs,linpos,linvar,linval)
+
 
     ! NON-EXECUTABLE STATEMENTS
     
@@ -196,6 +242,28 @@ contains
 904 FORMAT(1X,'Current point:',/6X,3(1X,D21.8))
 
   end subroutine dfoirfalg
+
+  function evalinfeas(n,x,me,mi,flag)
+
+    integer :: flag,me,mi,n
+    real(8) :: x(n)
+
+    real(8) :: evalinfeas
+
+    real(8) :: c
+    integer :: i
+
+    evalinfeas = 0.0D0
+    do i = 1,me
+       call uevalc(n,x,i,c,flag)
+       evalinfeas = max(evalinfeas, abs(c))
+    end do
+    do i = me + 1,me + mi
+       call uevalc(n,x,i,c,flag)
+       evalinfeas = max(evalinfeas, max(0.0D0, c))
+    end do
+
+  end function evalinfeas
 
   !----------------------------------------------------------!
   ! SUBROUTINE UEVALF                                        !
@@ -263,5 +331,74 @@ contains
 
   end subroutine uevaljac
 
+  !----------------------------------------------------------!
+  ! SUBROUTINE LEVALC                                        !
+  !                                                          !
+  ! This subroutine evaluates the linearized constraints of  !
+  ! the optimality subproblem.                               !
+  !                                                          !
+  !----------------------------------------------------------!
+
+  subroutine levalc(n,x,ind,c,flag)
+
+    ! SCALAR ARGUMENTS
+    integer :: flag,ind,n
+    real(8) :: c
+    
+    ! ARRAY ARGUMENTS
+    real(8) :: x(n)
+    
+    intent(in ) :: ind,n,x
+    intent(out) :: c,flag
+    
+    ! LOCAL SCALARS
+    integer :: end,i,start
+
+    start = linpos(ind)
+    end   = linpos(ind + 1) - 1
+
+    c = linrhs(ind)
+
+    do i = start,end
+       c = c + linval(i) * x(linvar(i))
+    end do
+
+    flag = 0
+    
+  end subroutine levalc
+  
+  !----------------------------------------------------------!
+  ! SUBROUTINE LEVALJAC                                      !
+  !                                                          !
+  ! This subroutine evaluates the gradients of the           !
+  ! linearized constraints of the optimality subproblem.     !
+  !----------------------------------------------------------!
+  
+  subroutine levaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
+
+    ! SCALAR ARGUMENTS
+    integer :: flag,ind,jcnnz,n
+    
+    ! ARRAY ARGUMENTS
+    integer :: jcvar(n)
+    real(8) :: jcval(n),x(n)
+
+    intent(in ) :: ind,n,x
+    intent(out) :: flag,jcnnz,jcval,jcvar
+
+    ! LOCAL SCALARS
+    integer :: end,i,start
+
+    start = linpos(ind)
+    end   = linpos(ind + 1) - 1
+
+    jcnnz = end - start + 1
+
+    jcvar(1:jcnnz) = linvar(start:end)
+    jcval(1:jcnnz) = linval(start:end)
+
+    flag = 0
+
+  end subroutine levaljac
 
 end module dfoirfilter
