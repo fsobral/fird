@@ -32,6 +32,7 @@ LOPTS = $(SLOPTS)
 export
 
 all: lib
+	mkdir -p $(BIN)
 
 # Generate the main FKSS library
 lib:
