@@ -156,9 +156,9 @@ contains
 
        write(*,903) (x(i), i = 1,n)
 
-       ! --------------- !
-       ! Optmality phase !
-       ! --------------- !
+       ! ---------------- !
+       ! Optimality phase !
+       ! ---------------- !
 
        ! Construct the linear system
 
