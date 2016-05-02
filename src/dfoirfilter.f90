@@ -151,7 +151,7 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,levalc,levaljac, &
-            nf,ffilter,hfilter,cfeas,fy,hynorm,flag)
+            nf,ffilter,hfilter,cfeas,fy,flag)
 
        ! Verify convergence conditions
 

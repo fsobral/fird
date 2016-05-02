@@ -1,7 +1,7 @@
 ! Uses the adapted TRDF algorithm for solving the optimality phase
 
 subroutine qpsolver(n,y,l,u,me,mi,uevalf,uevalc,uevaljac, &
-                    nf,ffilter,hfilter,epsopt,fy,hynorm,flag)
+                    nf,ffilter,hfilter,epsopt,fy,flag)
 
   use trdf_solver
   use userinterface

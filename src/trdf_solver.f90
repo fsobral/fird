@@ -14,13 +14,13 @@ contains
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
   subroutine qpsolver(n,y,l,u,me,mi,uevalf_,uevalc_,uevaljac_, &
-       nf,ffilter,hfilter,epsopt,fy,hynorm,flag)
+       nf,ffilter,hfilter,epsopt,fy,flag)
 
     implicit none
 
     ! SCALAR ARGUMENTS
     integer :: flag,me,mi,n,nf
-    real(8) :: epsopt,fy,hynorm
+    real(8) :: epsopt,fy
 
     ! ARRAY ARGUMENTS
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
@@ -52,6 +52,14 @@ contains
 
     ccoded(1) = .true.
     ccoded(2) = .true.
+
+    maxfcnt = 1000 * n
+
+    rbeg = 1.0D-1
+
+    rend = epsopt
+
+    xeps = 1.0D-8
 
     call TRDFSUB(N,NPT,X,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALC, &
          TRDF_EVALJAC,TRDF_EVALHC,MAXFCNT,RBEG,REND,XEPS, &
