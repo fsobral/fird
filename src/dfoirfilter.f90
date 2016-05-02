@@ -145,19 +145,27 @@ contains
 
        ! Solve the subproblem
 
+       ! Here we can use 'x', since its old value is not necessary anymore.
+       do i = 1,n
+          x(i) = z(i)
+       end do
+
+       call qpsolver(n,x,l,u,me,mi,aevalf,levalc,levaljac, &
+            nf,ffilter,hfilter,cfeas,fy,hynorm,flag)
+
        ! Verify convergence conditions
 
-       if ( hzdnorm .le. epsfeas .and. &
-            nzdnorm .le. epsopt ) then
+       dnorm = 0.0D0
+       do i = 1,n
+          dnorm = max(dnorm, abs(z(i) - y(i)))
+       end do
+       
+       if ( hydnorm .le. epsfeas .and. &
+            dnorm .le. epsopt ) then
           flag = 0
           exit
        end if
 
-       dnorm = 0.0D0
-       do i = 1,n
-          dnorm = max(dnorm, abs(z(i) - zd(i)))
-       end do
-       
        if ( dnorm .le. epsopt ) then
           flag = 1
           exit
@@ -167,7 +175,7 @@ contains
        ! Filter Update !
        ! ------------- !
 
-       if ( fxnew .ge. fx ) then
+       if ( fy .ge. fx ) then
 
           ! This is an h-iteration
           nf          = nf + 1
@@ -184,7 +192,7 @@ contains
 
        ! Prepare for next iteration !
 
-       fx = fxnew
+       fx = fy
 
        hxnorm = evalinfeas(n,x,me,mi,flag)
        
@@ -209,6 +217,14 @@ contains
 904 FORMAT(1X,'Current point:',/6X,3(1X,D21.8))
 
   end subroutine dfoirfalg
+
+  !----------------------------------------------------------!
+  ! FUNCTION EVALINFEAS                                      !
+  !                                                          !
+  ! This function evaluates the sup-norm of the              !
+  ! infeasibilities.                                         !
+  !                                                          !
+  !----------------------------------------------------------!
 
   function evalinfeas(n,x,me,mi,flag)
 
