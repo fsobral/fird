@@ -9,18 +9,24 @@ module trdf_solver
   procedure(evalc  ), pointer :: uevalc
   procedure(evaljac), pointer :: uevaljac
 
+  private
+
+  public :: solver
+
 contains
 
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
-  subroutine qpsolver(n,y,l,u,me,mi,uevalf_,uevalc_,uevaljac_, &
-       nf,ffilter,hfilter,epsopt,fy,flag)
+  subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevaljac_, &
+       nf,alpha,ffilter,hfilter,epsopt,fy,flag)
+
+    use trdf
 
     implicit none
 
     ! SCALAR ARGUMENTS
     integer :: flag,me,mi,n,nf
-    real(8) :: epsopt,fy
+    real(8) :: alpha,epsopt,fy
 
     ! ARRAY ARGUMENTS
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
@@ -50,6 +56,8 @@ contains
        linear(i) = .true.
     end do
 
+    NPT = 2 * N + 3
+
     ccoded(1) = .true.
     ccoded(2) = .true.
 
@@ -61,11 +69,11 @@ contains
 
     xeps = 1.0D-8
 
-    call TRDFSUB(N,NPT,X,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALC, &
+    call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALC, &
          TRDF_EVALJAC,TRDF_EVALHC,MAXFCNT,RBEG,REND,XEPS, &
-         FFILTER,HFILTER,FY,FEAS,FCNT)     
+         NF,ALPHA,FFILTER,HFILTER,FY,FEAS,FCNT)     
 
-  end subroutine qpsolver
+  end subroutine solver
 
   ! ******************************************************************
   ! ******************************************************************

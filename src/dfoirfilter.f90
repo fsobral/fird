@@ -11,7 +11,7 @@ module dfoirfilter
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
   ! Maximum number of iterations
-  integer, parameter :: MAXITER = 2
+  integer, parameter :: MAXITER = 3
 
   ! ARRAYS
   integer, allocatable :: linpos(:),linvar(:)
@@ -53,11 +53,9 @@ contains
 
     ! LOCAL SCALARS
     integer :: i,j,k,iter,jcnnz,m,nf
-    real(8) :: c,cfeas,dnorm,fx,fxnew,fz,hxnorm,hznorm,hzdnorm,nzdnorm
+    real(8) :: c,cfeas,dnorm,fx,fy,fz,hxnorm,hznorm,hynorm
 
     iter = 1
-
-    nf = 1
 
     nfev = 0
     ncev = 0
@@ -76,9 +74,18 @@ contains
 
     hxnorm = evalinfeas(n,x,me,mi,flag)
 
-    call uevalf(n,x,fx,flag)
+    call aevalf(n,x,fx,flag)
+
+    ! Filter initialization
+
+    nf = 1
 
     do while ( .true. )
+
+       ! Creates the temporary filter \hat F
+       ! TODO: Change this!
+       ffilter(nf) = fx
+       hfilter(nf) = hxnorm
 
        if ( verbose ) write(*,900) iter
 
@@ -104,17 +111,14 @@ contains
 
           call restore(n,x,l,u,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
 
-          call uevalf(n,x,fz,flag)
+          call aevalf(n,x,fz,flag)
 
           write(*,*) 'HZNORM=',hznorm
 
           ! TODO: Test alpha and filter conditions. In case of failure,
           ! decrease feasibility tolerance.
 
-          if ( hznorm .ge. (1.0D0 - ALPHA) * hxnorm .and. &
-               fz .ge. fx - ALPHA * hxnorm ) goto 010
-
-          do i = 1,nf - 1
+          do i = 1,nf
              if ( hznorm .ge. (1.0D0 - ALPHA) * hfilter(i) .and. &
                   fz .ge. ffilter(i) - ALPHA * hfilter(i) ) goto 010
           end do
@@ -151,7 +155,7 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,levalc,levaljac, &
-            nf,ffilter,hfilter,cfeas,fy,flag)
+            nf,ALPHA,ffilter,hfilter,cfeas,fy,flag)
 
        ! Verify convergence conditions
 
@@ -160,16 +164,18 @@ contains
           dnorm = max(dnorm, abs(z(i) - y(i)))
        end do
        
-       if ( hydnorm .le. epsfeas .and. &
-            dnorm .le. epsopt ) then
-          flag = 0
-          exit
-       end if
+       hynorm = evalinfeas(n,x,me,mi,flag)
 
-       if ( dnorm .le. epsopt ) then
-          flag = 1
-          exit
-       end if
+!!$       if ( hynorm .le. epsfeas .and. &
+!!$            dnorm .le. epsopt ) then
+!!$          flag = 0
+!!$          exit
+!!$       end if
+!!$
+!!$       if ( dnorm .le. epsopt ) then
+!!$          flag = 1
+!!$          exit
+!!$       end if
 
        ! ------------- !
        ! Filter Update !
@@ -178,10 +184,8 @@ contains
        if ( fy .ge. fx ) then
 
           ! This is an h-iteration
-          nf          = nf + 1
-          ffilter(nf) =     fx
-          hfilter(nf) = hxnorm
-
+          ! The temporary filter turns effective
+          nf = nf + 1
           if ( verbose ) write(*,901) fx, hxnorm
 
        else
