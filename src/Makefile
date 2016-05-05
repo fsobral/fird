@@ -1,3 +1,5 @@
+base: userinterface.mod
+
 install:
 	mkdir -p $(LIB)
 	mv libdfoirfilter.a $(LIB)
@@ -14,10 +16,10 @@ dfoirfilter.o: dfoirfilter.f90 restoration.o userinterface.o
 restoration.o: restoration.f90
 	$(FC) -c $^ -o $@
 
-%.mod: %.o
+userinterface.mod: userinterface.o
 
 %.o: %.f90
-	$(FC) -c $^ -o $@
+	$(FC) -c -J$(LIB) $^ -o $@
 
 clean:
 	rm -vf *~ *.o *.mod

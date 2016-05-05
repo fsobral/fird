@@ -4,7 +4,7 @@ FKSS_HOME = $(CURDIR)
 SRC = $(FKSS_HOME)/src
 LIB = $(FKSS_HOME)/lib
 TES = $(FKSS_HOME)/tests
-SOL = $(SRC)/solvers
+SOL = $(FKSS_HOME)/solvers
 BIN = $(FKSS_HOME)/bin
 OBJ = $(FKSS_HOME)/objects
 
@@ -20,10 +20,13 @@ FCC =
 
 # Solver configuration parameters
 
-SOLVERLIB = /opt/tango/algencan-3.0.0/lib
-SOLVER_INTERFACE = algencan_solver
+SOLVERLIB = /opt/tango/algencan-3.0.0/lib:$(FKSS_HOME)/../../trdf/trdf/lib
+MODULES=$(FKSS_HOME)/../../trdf/trdf/src
+RESTORATION_INTERFACE = restoration
+OPTIMIZATION_INTERFACE = trdf_solver_interface
+
 # The following order do matters!
-SLOPTS = -ldfoirfilter -lalgencan 
+SLOPTS = -ldfoirfilter -ltrdf -lalgencan 
 
 # Linking options
 
@@ -34,8 +37,13 @@ export
 all: lib
 	mkdir -p $(BIN)
 
+base:
+	$(MAKE) -C $(SRC) base
+
 # Generate the main FKSS library
-lib:
+lib: base
+	mkdir -p $(LIB)
+	$(MAKE) -C $(SOL) install
 	$(MAKE) -C $(SRC) all install
 
 # Generate the solver interface object
