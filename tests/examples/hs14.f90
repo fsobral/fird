@@ -16,13 +16,13 @@ program FKSSMAIN
   
   allocate(x(n),l(n),u(n))
 
-  x(1) = 9.0D0
-  x(2) = 9.0D0
+  x(1) = 2.0D0
+  x(2) = 2.0D0
 
-  l(1) = - 10.0D0
-  l(2) = - 10.0D0
-  u(1) =   10.0D0
-  u(2) =   10.0D0
+  l(1) = - 1.0D+20
+  l(2) = - 1.0D+20
+  u(1) =   1.0D+20
+  u(2) =   1.0D+20
 
   verbose = .true.
 
@@ -82,9 +82,9 @@ contains
   flag = 0
 
   if ( ind .eq. 1 ) then
-     c = 0.25D0 * x(1) ** 2.0D0 - x(2) ** 2.0D0 - 1.0D0
+     c = 0.25D0 * x(1) ** 2.0D0 + x(2) ** 2.0D0 - 1.0D0
   else if ( ind .eq. 2 ) then
-     c = x(1) - 2.0D0 * x(2)
+     c = x(1) - 2.0D0 * x(2) + 1.0D0
   else
      flag = 1
   end if
