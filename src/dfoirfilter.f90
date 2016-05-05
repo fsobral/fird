@@ -113,7 +113,7 @@ contains
 
           call aevalf(n,x,fz,flag)
 
-          write(*,*) 'HZNORM=',hznorm
+          WRITE(*,905) fz,hznorm
 
           ! TODO: Test alpha and filter conditions. In case of failure,
           ! decrease feasibility tolerance.
@@ -136,11 +136,21 @@ contains
        k = 1
 
        do i = 1,m
-          call aevalc(n,x,i,linrhs(i),flag)
-          linrhs(i) = - linrhs(i)
+
+          linrhs(i) = 0.0D0
+
+          ! Just for inequalities
+          if ( i .gt. me ) then
+             call aevalc(n,x,i,linrhs(i),flag)
+             linrhs(i) = linrhs(i) - max(0.0D0, linrhs(i))
+          end if
 
           call aevaljac(n,x,i,linvar(k),linval(k),jcnnz,flag)
           linpos(i) = k
+
+          do j = k,k + jcnnz - 1
+             linrhs(i) = linrhs(i) - linval(j) * x(linvar(j))
+          end do
 
           k = k + jcnnz
        end do
@@ -149,13 +159,12 @@ contains
 
        ! Solve the subproblem
 
-       ! Here we can use 'x', since its old value is not necessary anymore.
        do i = 1,n
-          x(i) = z(i)
+          z(i) = x(i)
        end do
 
-       call qpsolver(n,x,l,u,me,mi,aevalf,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,cfeas,fy,flag)
+       call qpsolver(n,x,l,u,me,mi,aevalf,levalc,levaljac,aevalc, &
+            nf,ALPHA,ffilter,hfilter,epsfeas,1.0D-8,fy,flag)
 
        ! Verify convergence conditions
 
@@ -198,7 +207,7 @@ contains
 
        fx = fy
 
-       hxnorm = evalinfeas(n,x,me,mi,flag)
+       hxnorm = hynorm
        
        iter = iter + 1
 
@@ -217,8 +226,10 @@ contains
 900 FORMAT('Iteration',1X,I10,/)
 901 FORMAT(1X,'H-iteration: the pair (',E9.1,',',E9.1,') was added.',/)
 902 FORMAT(1X,'F-iteration.',/)
-903 FORMAT(1X,'Restored point:',/6X,3(1X,D21.8))
-904 FORMAT(1X,'Current point:',/6X,3(1X,D21.8))
+903 FORMAT(1X,'Restored point:',/,6X,3(1X,D21.8))
+904 FORMAT(1X,'Current point:',/,6X,3(1X,D21.8))
+905 FORMAT(1X,'Restoration Phase',/,6X,'F=',1X,D21.8,/ &
+         6X,'H=',1X,D21.8)
 
   end subroutine dfoirfalg
 

@@ -6,8 +6,8 @@ module trdf_solver
 
   ! GLOBAL USER-DEFINED SUBROUTINES
   procedure(evalf  ), pointer :: uevalf
-  procedure(evalc  ), pointer :: uevalc
-  procedure(evaljac), pointer :: uevaljac
+  procedure(evalc  ), pointer :: uevallc,uevalc
+  procedure(evaljac), pointer :: uevalljac
 
   private
 
@@ -17,8 +17,8 @@ contains
 
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
-  subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevaljac_, &
-       nf,alpha,ffilter,hfilter,epsopt,fy,flag)
+  subroutine solver(n,y,l,u,me,mi,uevalf_,uevallc_,uevalljac_,uevalc_, &
+       nf,alpha,ffilter,hfilter,epsfeas,epsopt,fy,flag)
 
     use trdf
 
@@ -26,13 +26,13 @@ contains
 
     ! SCALAR ARGUMENTS
     integer :: flag,me,mi,n,nf
-    real(8) :: alpha,epsopt,fy
+    real(8) :: alpha,epsfeas,epsopt,fy
 
     ! ARRAY ARGUMENTS
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
 
     ! EXTERNAL SUBROUTINES
-    external :: uevalf_,uevalc_,uevaljac_
+    external :: uevalf_,uevallc_,uevalljac_,uevalc_
 
     ! LOCAL SCALARS
     integer :: i,m,maxfcnt,npt,fcnt
@@ -42,8 +42,9 @@ contains
     logical :: ccoded(2),equatn(me + mi),linear(me + mi)
 
     uevalf   => uevalf_
-    uevalc   => uevalc_
-    uevaljac => uevaljac_
+    uevallc   => uevallc_
+    uevalljac => uevalljac_
+    uevalc    => uevalc_
 
     m = me + mi
 
@@ -69,9 +70,9 @@ contains
 
     xeps = 1.0D-8
 
-    call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALC, &
-         TRDF_EVALJAC,TRDF_EVALHC,MAXFCNT,RBEG,REND,XEPS, &
-         NF,ALPHA,FFILTER,HFILTER,FY,FEAS,FCNT)     
+    call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
+         TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS, &
+         NF,ALPHA,FFILTER,HFILTER,EPSFEAS,FY,FEAS,FCNT)     
 
   end subroutine solver
 
@@ -94,7 +95,7 @@ contains
 
     lmem = .false.
 
-    call uevaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
+    call uevalljac(n,x,ind,jcvar,jcval,jcnnz,flag)
 
   end subroutine trdf_evaljac
 

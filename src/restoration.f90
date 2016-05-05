@@ -140,10 +140,6 @@ contains
 
     target :: xp
 
-    ! EXTERNAL SUBROUTINES
-!    external :: r_evalf,r_evalg,r_evalh,r_evalc,r_evaljac,r_evalhc, &
-!         r_evalfc,r_evalgjac,r_evalgjacp,r_evalhl,r_evalhlp
-
     evalc   => uevalc
     evaljac => uevaljac
 
