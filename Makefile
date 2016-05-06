@@ -20,8 +20,8 @@ FCC =
 
 # Solver configuration parameters
 
-SOLVERLIB = /opt/tango/algencan-3.0.0/lib:$(FKSS_HOME)/../../trdf/trdf/lib
-MODULES=$(FKSS_HOME)/../../trdf/trdf/src
+SOLVERLIB = /opt/tango/algencan-3.0.0/lib $(FKSS_HOME)/../trdf/lib
+MODULES=$(FKSS_HOME)/../trdf/src
 RESTORATION_INTERFACE = restoration
 OPTIMIZATION_INTERFACE = trdf_solver_interface
 
@@ -52,8 +52,8 @@ lib: base
 
 # User-defined executable
 fkss: all
-	$(FC) -L$(SOLVERLIB) -L$(LIB) \
-	$(FCC) $(PROBLEM) $(LOPTS) -o $(BIN)/$@
+	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
+	$(FCC) $(PROBLEM) $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
 # User-defined C executable
 c_trdf: all
@@ -70,6 +70,6 @@ hstests: all
 
 clean:
 	rm -vf *~ $(LIB)/* $(BIN)/* $(OBJ)/*
-	$(foreach i,$(SRC),$(MAKE) -C $(i) clean;)
+	$(foreach i,$(SRC) $(SOL),$(MAKE) -C $(i) clean;)
 
 .PHONY: lib all clean
