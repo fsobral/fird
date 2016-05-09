@@ -56,7 +56,7 @@ contains
 
     flag = 0
 
-    f = x(1) * x(2)
+    f = (x(1) * x(2)) ** 2.0D0
 
   end subroutine evalf
 
