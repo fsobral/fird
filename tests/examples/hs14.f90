@@ -82,9 +82,9 @@ contains
   flag = 0
 
   if ( ind .eq. 1 ) then
-     c = 0.25D0 * x(1) ** 2.0D0 + x(2) ** 2.0D0 - 1.0D0
-  else if ( ind .eq. 2 ) then
      c = x(1) - 2.0D0 * x(2) + 1.0D0
+  else if ( ind .eq. 2 ) then
+     c = 0.25D0 * x(1) ** 2.0D0 + x(2) ** 2.0D0 - 1.0D0
   else
      flag = 1
   end if
@@ -115,15 +115,15 @@ contains
     if ( ind .eq. 1 ) then
        jcnnz = 2
        jcvar(1) = 1
-       jcval(1) = 2.0 * 0.25D0 * x(1)
-       jcvar(2) = 2
-       jcval(2) = 2.0D0 * x(2)
-    else if ( ind .eq. 2 ) then
-       jcnnz = 2
-       jcvar(1) = 1
        jcval(1) = 1.0D0
        jcvar(2) = 2
        jcval(2) = - 2.0D0
+    else if ( ind .eq. 2 ) then
+       jcnnz = 2
+       jcvar(1) = 1
+       jcval(1) = 2.0 * 0.25D0 * x(1)
+       jcvar(2) = 2
+       jcval(2) = 2.0D0 * x(2)
     else
        flag = 1
     end if
