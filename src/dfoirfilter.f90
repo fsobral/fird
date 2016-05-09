@@ -13,7 +13,7 @@ module dfoirfilter
   ! Restoration reduction factor
   real(8), parameter :: RESRFAC = 9.5D-01
   ! Maximum number of iterations
-  integer, parameter :: MAXITER = 20
+  integer, parameter :: MAXITER = 100
   ! Maximum number of printing elements
   integer, parameter :: MAXNEL  = 3
 
@@ -35,7 +35,8 @@ module dfoirfilter
 
 contains
 
-  subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_,verbose,epsfeas,epsopt,flag)
+  subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_, &
+       verbose,epsfeas,epsopt,flag)
 
     use restoration
 
@@ -58,7 +59,8 @@ contains
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
     integer :: i,j,k,iter,jcnnz,m,nf
-    real(8) :: c,cfeas,dnorm,dxznorm,fx,fy,fz,hxnorm,hznorm,hynorm
+    real(8) :: c,currfeas,curropt,dnorm,dxznorm,fx,fy,fz,hxnorm,&
+         hznorm,hynorm
 
     iter = 1
 
@@ -72,12 +74,16 @@ contains
 
     m = me + mi
 
+    curropt = sqrt(epsopt)
+
     ! Initialization
     ! TODO: check for errors when allocating
 
     allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
 
     hxnorm = evalinfeas(n,x,me,mi,flag)
+
+    currfeas = hxnorm
 
     call aevalf(n,x,fx,flag)
 
@@ -101,7 +107,7 @@ contains
 
        xp(1:n) = x(1:n)
 
-       cfeas = (1.0D0 - ALPHA) * hxnorm
+       currfeas = max(epsfeas, min(currfeas, (1.0D0 - ALPHA) * hxnorm))
 
        if ( verbose ) write(*,905)
 
@@ -121,7 +127,7 @@ contains
 !!$             ru(i) = min(u(i),x(i) + BETA * hxnorm)
 !!$          end do
 
-          call restore(n,x,l,u,me,mi,aevalc,aevaljac,cfeas,verbose,hznorm,flag)
+          call restore(n,x,l,u,me,mi,aevalc,aevaljac,currfeas,verbose,hznorm,flag)
 
           call aevalf(n,x,fz,flag)
 
@@ -145,8 +151,8 @@ contains
           
           if ( isforb .or. .not. isalph ) then 
 
-             cfeas = RESRFAC * cfeas
-             if ( verbose ) write(*,907) cfeas
+             currfeas = max(epsfeas, RESRFAC * currfeas)
+             if ( verbose ) write(*,907) currfeas
 
           end if
 
@@ -193,13 +199,12 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,epsfeas,1.0D-8,fy,flag)
+            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.false.,fy,  &
+            hynorm,flag)
 
        ! Verify convergence conditions
 
        dnorm = evalDist(n,xp,x)
-
-       hynorm = evalinfeas(n,x,me,mi,flag)
 
        if ( verbose ) write(*,910) fy,hynorm,dnorm,min(n,MAXNEL),&
             (x(i), i=1,min(n,MAXNEL))
@@ -209,11 +214,6 @@ contains
           flag = 0
           exit
        end if
-
-!!$       if ( dnorm .le. epsopt ) then
-!!$          flag = 1
-!!$          exit
-!!$       end if
 
        ! ------------- !
        ! Filter Update !
@@ -244,6 +244,9 @@ contains
        
        iter = iter + 1
 
+       curropt = max(epsopt, dnorm / iter)
+       currfeas = max(epsfeas, dnorm / iter)
+
        if ( iter .gt. MAXITER ) then
           flag = 2
           exit
@@ -253,12 +256,13 @@ contains
 
     deallocate(linrhs,linpos,linvar,linval)
 
+    write(*,911) fx,hxnorm,nfev,min(n,MAXNEL),(x(i),i=1,min(n,MAXNEL))
 
     ! NON-EXECUTABLE STATEMENTS
     
 900 FORMAT(/,70('-'),/,'Iteration',I61,/,70('-'),/,/,'F(X) = ', &
            40X,1PD23.8,/,'H(X) = ',40X,1PD23.8)
-901 FORMAT('H-iteration: the pair (',E9.1,',',E9.1,') was added.',/)
+901 FORMAT('H-iteration: the pair (',1PD17.8,',',1PD17.8,') was added.',/)
 902 FORMAT('F-iteration.',/)
 903 FORMAT(/,'Filter update',/,13('-'))
 904 FORMAT('Current point (first',1X,I5,' elements):',/,2X, &
@@ -273,6 +277,10 @@ contains
 910 FORMAT(3X,'F(Z+D) =',43X,1PD16.8,/,3X,'H(Z+D) =',43X,D16.8,/,   &
            3X,'||D|| =',44X,D16.8,/,3X,'Optimized point (first',1X, &
            I5,' elements):',/,3X,16X,3(1X,1PD16.8))
+911 FORMAT(/,70('-'),/,'Final Iteration',/,70('-'),/,'F(X) =',48X, &
+           1PD16.8,/,'H(X) =',48X,D16.8,/,   &
+           'Function Evaluations =',28X,I20,/,'Solution (first',1X, &
+           I5,' elements):',/,2X,4(1X,1PD16.8))
 
   end subroutine dfoirfalg
 

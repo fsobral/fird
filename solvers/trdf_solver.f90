@@ -18,15 +18,16 @@ contains
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
   subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
-       nf,alpha,ffilter,hfilter,epsfeas,epsopt,fy,flag)
+       nf,alpha,ffilter,hfilter,epsfeas,epsopt,verbose,fy,hynorm,flag)
 
     use trdf
 
     implicit none
 
     ! SCALAR ARGUMENTS
+    logical :: verbose
     integer :: flag,me,mi,n,nf
-    real(8) :: alpha,epsfeas,epsopt,fy
+    real(8) :: alpha,epsfeas,epsopt,fy,hynorm
 
     ! ARRAY ARGUMENTS
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
@@ -36,7 +37,7 @@ contains
 
     ! LOCAL SCALARS
     integer :: i,m,maxfcnt,npt,fcnt
-    real(8) :: feas,rbeg,rend,xeps
+    real(8) :: rbeg,rend,xeps
 
     ! LOCAL ARRAYS
     logical :: ccoded(2),equatn(me + mi),linear(me + mi)
@@ -68,11 +69,11 @@ contains
 
     rend = epsopt
 
-    xeps = 1.0D-8
+    xeps = 1.0D-08
 
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
-         TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS, &
-         NF,ALPHA,FFILTER,HFILTER,EPSFEAS,FY,FEAS,FCNT)     
+         TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
+         NF,ALPHA,FFILTER,HFILTER,EPSFEAS,FY,HYNORM,FCNT)     
 
   end subroutine solver
 
