@@ -17,7 +17,7 @@ contains
 
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
-  subroutine solver(n,y,l,u,me,mi,uevalf_,uevallc_,uevalljac_,uevalc_, &
+  subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
        nf,alpha,ffilter,hfilter,epsfeas,epsopt,fy,flag)
 
     use trdf

@@ -1,6 +1,6 @@
 ! Uses the adapted TRDF algorithm for solving the optimality phase
 
-subroutine qpsolver(n,y,l,u,me,mi,evalf_,evallc_,evalljac_,evalc_, &
+subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
                     nf,alpha,ffilter,hfilter,epsfeas,epsopt,fy,flag)
 
   use trdf_solver
@@ -20,7 +20,7 @@ subroutine qpsolver(n,y,l,u,me,mi,evalf_,evallc_,evalljac_,evalc_, &
   procedure(evalc) :: evallc_,evalc_
   procedure(evaljac) :: evalljac_
 
-  call solver(n,y,l,u,me,mi,evalf_,evallc_,evalljac_,evalc_, &
+  call solver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
        nf,alpha,ffilter,hfilter,epsfeas,epsopt,fy,flag)
 
 end subroutine qpsolver

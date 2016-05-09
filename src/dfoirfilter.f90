@@ -10,8 +10,12 @@ module dfoirfilter
   real(8), parameter :: DELMIN = 1.0D-12
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
+  ! Restoration reduction factor
+  real(8), parameter :: RESRFAC = 9.5D-01
   ! Maximum number of iterations
-  integer, parameter :: MAXITER = 3
+  integer, parameter :: MAXITER = 20
+  ! Maximum number of printing elements
+  integer, parameter :: MAXNEL  = 3
 
   ! ARRAYS
   integer, allocatable :: linpos(:),linvar(:)
@@ -49,11 +53,12 @@ contains
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
-    real(8) :: ffilter(MAXITER),hfilter(MAXITER),rl(n),ru(n),y(n),z(n),zd(n)
+    real(8) :: ffilter(MAXITER),hfilter(MAXITER),rl(n),ru(n),xp(n)
 
     ! LOCAL SCALARS
+    logical :: isforb,isalph,isbeta
     integer :: i,j,k,iter,jcnnz,m,nf
-    real(8) :: c,cfeas,dnorm,fx,fy,fz,hxnorm,hznorm,hynorm
+    real(8) :: c,cfeas,dnorm,dxznorm,fx,fy,fz,hxnorm,hznorm,hynorm
 
     iter = 1
 
@@ -87,51 +92,75 @@ contains
        ffilter(nf) = fx
        hfilter(nf) = hxnorm
 
-       if ( verbose ) write(*,900) iter
-
-       write(*,*) 'FX=',fx
-       write(*,*) 'HXNORM=',hxnorm
-       write(*,*) 'BETA=',BETA
-       write(*,904) (x(i), i = 1,n)
+       if ( verbose ) write(*,900) iter,fx,hxnorm
+       if ( verbose ) write(*,904) min(MAXNEL,n),(x(i), i = 1,min(MAXNEL,n))
 
        ! ----------------- !
        ! Feasibility phase !
        ! ----------------- !
 
+       xp(1:n) = x(1:n)
+
        cfeas = (1.0D0 - ALPHA) * hxnorm
 
-       if ( hxnorm .gt. epsfeas ) then
+       if ( verbose ) write(*,905)
+
+       isforb = .true.
+       isalph = .false.
+       isbeta = .false.
+
+       do while ( hxnorm .gt. epsfeas .and.           &
+                  ( isforb .or. ( .not. isalph ) ) )
+
+          isforb = .false.
+          isalph = .true.
+          isbeta = .true.
 
 !!$          do i = 1,n
 !!$             rl(i) = max(l(i),x(i) - BETA * hxnorm)
 !!$             ru(i) = min(u(i),x(i) + BETA * hxnorm)
 !!$          end do
 
-010       cfeas = 9.5D-1 * cfeas
-
-          call restore(n,x,l,u,me,mi,uevalc,uevaljac,cfeas,verbose,hznorm,flag)
+          call restore(n,x,l,u,me,mi,aevalc,aevaljac,cfeas,verbose,hznorm,flag)
 
           call aevalf(n,x,fz,flag)
-
-          WRITE(*,905) fz,hznorm
 
           ! TODO: Test alpha and filter conditions. In case of failure,
           ! decrease feasibility tolerance.
 
           do i = 1,nf
              if ( hznorm .ge. (1.0D0 - ALPHA) * hfilter(i) .and. &
-                  fz .ge. ffilter(i) - ALPHA * hfilter(i) ) goto 010
+                  fz .ge. ffilter(i) - ALPHA * hfilter(i) ) then
+                isforb = .true.
+                exit
+             end if
           end do
 
-       end if
+          dxznorm = evalDist(n,xp,x)
 
-       write(*,903) (x(i), i = 1,n)
+          if ( hznorm .ge. (1 - ALPHA) * hxnorm ) isalph = .false.
+          if ( dxznorm .gt. BETA * hxnorm ) isbeta = .false.
+
+          if ( verbose ) write(*,906) isforb,isalph,isbeta
+          
+          if ( isforb .or. .not. isalph ) then 
+
+             cfeas = RESRFAC * cfeas
+             if ( verbose ) write(*,907) cfeas
+
+          end if
+
+       end do
+
+       if ( verbose ) WRITE(*,908) fz,hznorm,min(n,MAXNEL),(x(i), i = 1,min(MAXNEL,n))
 
        ! ---------------- !
        ! Optimality phase !
        ! ---------------- !
 
        ! Construct the linear system
+
+       if ( verbose ) write(*,909)
 
        k = 1
 
@@ -160,27 +189,27 @@ contains
        ! Solve the subproblem
 
        do i = 1,n
-          z(i) = x(i)
+          xp(i) = x(i)
        end do
 
-       call qpsolver(n,x,l,u,me,mi,aevalf,levalc,levaljac,aevalc, &
+       call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
             nf,ALPHA,ffilter,hfilter,epsfeas,1.0D-8,fy,flag)
 
        ! Verify convergence conditions
 
-       dnorm = 0.0D0
-       do i = 1,n
-          dnorm = max(dnorm, abs(z(i) - y(i)))
-       end do
-       
+       dnorm = evalDist(n,xp,x)
+
        hynorm = evalinfeas(n,x,me,mi,flag)
 
-!!$       if ( hynorm .le. epsfeas .and. &
-!!$            dnorm .le. epsopt ) then
-!!$          flag = 0
-!!$          exit
-!!$       end if
-!!$
+       if ( verbose ) write(*,910) fy,hynorm,dnorm,min(n,MAXNEL),&
+            (x(i), i=1,min(n,MAXNEL))
+
+       if ( hynorm .le. epsfeas .and. &
+            dnorm .le. epsopt ) then
+          flag = 0
+          exit
+       end if
+
 !!$       if ( dnorm .le. epsopt ) then
 !!$          flag = 1
 !!$          exit
@@ -190,6 +219,8 @@ contains
        ! Filter Update !
        ! ------------- !
 
+       if ( verbose ) write(*,903)
+       
        if ( fy .ge. fx ) then
 
           ! This is an h-iteration
@@ -203,7 +234,9 @@ contains
 
        end if
 
+       ! -------------------------- !
        ! Prepare for next iteration !
+       ! -------------------------- !
 
        fx = fy
 
@@ -223,15 +256,47 @@ contains
 
     ! NON-EXECUTABLE STATEMENTS
     
-900 FORMAT('Iteration',1X,I10,/)
-901 FORMAT(1X,'H-iteration: the pair (',E9.1,',',E9.1,') was added.',/)
-902 FORMAT(1X,'F-iteration.',/)
-903 FORMAT(1X,'Restored point:',/,6X,3(1X,D21.8))
-904 FORMAT(1X,'Current point:',/,6X,3(1X,D21.8))
-905 FORMAT(1X,'Restoration Phase',/,6X,'F=',1X,D21.8,/ &
-         6X,'H=',1X,D21.8)
+900 FORMAT(/,70('-'),/,'Iteration',I61,/,70('-'),/,/,'F(X) = ', &
+           40X,1PD23.8,/,'H(X) = ',40X,1PD23.8)
+901 FORMAT('H-iteration: the pair (',E9.1,',',E9.1,') was added.',/)
+902 FORMAT('F-iteration.',/)
+903 FORMAT(/,'Filter update',/,13('-'))
+904 FORMAT('Current point (first',1X,I5,' elements):',/,2X, &
+           4(1X,1PD16.8))
+905 FORMAT(/,'Restoration Phase',/,17('-'),/)
+906 FORMAT(3X,'Forbidden?',56X,L,/,3X,'Alpha?',60X,L,/,3X,'Beta?',61X,L,/)
+907 FORMAT(3X,'Updated feasibility requirement to',27X,E9.1,/)
+908 FORMAT(3X,'F(Z) =',45X,1PD16.8,/,3X,'H(Z) =',45X,D16.8,/,3X, &
+           'Restored point (first',1X,I5,' elements):',/,3X,16X, &
+           3(1X,1PD16.8))
+909 FORMAT(/,'Optimization Phase',/,18('-'),/)
+910 FORMAT(3X,'F(Z+D) =',43X,1PD16.8,/,3X,'H(Z+D) =',43X,D16.8,/,   &
+           3X,'||D|| =',44X,D16.8,/,3X,'Optimized point (first',1X, &
+           I5,' elements):',/,3X,16X,3(1X,1PD16.8))
 
   end subroutine dfoirfalg
+
+  function evaldist(n,x,y)
+
+    implicit none
+
+    ! SCALAR ARGUMENTS
+    integer, intent(in) :: n
+
+    ! ARRAY ARGUMENTS
+    real(8), intent(in) :: x(n),y(n)
+
+    real(8) :: evaldist
+
+    ! LOCAL SCALARS
+    integer :: i
+
+    evaldist = 0.0D0
+    do i = 1,n
+       evaldist = max(evaldist, abs(x(i) - y(i)))
+    end do
+
+  end function evaldist
 
   !----------------------------------------------------------!
   ! FUNCTION EVALINFEAS                                      !
@@ -242,6 +307,8 @@ contains
   !----------------------------------------------------------!
 
   function evalinfeas(n,x,me,mi,flag)
+
+    implicit none
 
     integer :: flag,me,mi,n
     real(8) :: x(n)
