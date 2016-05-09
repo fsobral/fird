@@ -65,7 +65,7 @@ contains
 
     maxfcnt = 1000 * n
 
-    rbeg = 1.0D-1
+    rbeg = 1.0D0!1.0D-1
 
     rend = epsopt
 

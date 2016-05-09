@@ -6,7 +6,7 @@ module dfoirfilter
 
   ! PARAMETERS
   real(8), parameter :: BETA = 1.0D-4
-  real(8), parameter :: ALPHA = 1.0D-1
+  real(8), parameter :: ALPHA = 1.0D-4
   real(8), parameter :: DELMIN = 1.0D-12
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
@@ -199,7 +199,7 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.false.,fy,  &
+            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.true.,fy,  &
             hynorm,flag)
 
        ! Verify convergence conditions
