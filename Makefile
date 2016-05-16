@@ -46,30 +46,20 @@ lib: base
 	$(MAKE) -C $(SOL) install
 	$(MAKE) -C $(SRC) all install
 
-# Generate the solver interface object
-#solver:
-#	$(MAKE) -C $(SOL) install
-
 # User-defined executable
 fkss: all
 	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
 	$(FCC) $(PROBLEM) $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
-# User-defined C executable
-c_trdf: all
-	$(CC) -L$(SOLVERLIB) -L$(LIB) $(OBJ)/solver.o \
-	$(PROBLEM) $(LOPTS) -lgfortran -lm -o $(BIN)/$@
-
 # Hock-Schittkowski test set executable
 hstests: all
 	$(MAKE) -C $(TES) hs
 
-	$(FC) -L$(SOLVERLIB) -L$(LIB) $(OBJ)/solver.o \
-	$(FCC) -I$(SRC) tests/hs/hstests.f -lhs $(LOPTS) \
-	-o $(BIN)/$@ 
+	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
+	$(FCC) tests/hs/hstests.f -lhs $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
 clean:
 	rm -vf *~ $(LIB)/* $(BIN)/* $(OBJ)/*
-	$(foreach i,$(SRC) $(SOL),$(MAKE) -C $(i) clean;)
+	$(foreach i,$(SRC) $(SOL) $(TES),$(MAKE) -C $(i) clean;)
 
 .PHONY: lib all clean
