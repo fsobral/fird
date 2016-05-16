@@ -7,5 +7,6 @@ lib/**
 # ALGENCAN's files
 .silent
 
-# Output files
+# Output files and HS test files
 *.out
+analysis-all

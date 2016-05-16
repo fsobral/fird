@@ -204,7 +204,7 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.false.,delta, &
+            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.true.,delta, &
             fy,hynorm,rho,flag)
 
        dnorm = evalDist(n,xp,x)
@@ -243,7 +243,7 @@ contains
        
        iter = iter + 1
 
-       curropt = max(epsopt, dnorm / iter)
+       curropt = max(epsopt, min(rho, dnorm / iter))
        currfeas = max(epsfeas, dnorm / iter)
 
        ! Verify convergence conditions

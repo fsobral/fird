@@ -235,8 +235,6 @@ C     LOCAL SCALARS
          rind = ind - NELI - NENL
       end if
 
-!      write(*,*) 'evalc',nn,ind,rind
-
       INDEX1(rind) = .true.
       
       call conv(4)
@@ -294,8 +292,6 @@ C     LOCAL SCALARS
       else
          rind = ind - NELI - NENL
       end if
-
-!      write(*,*) 'evaljac',ind,rind
 
       INDEX2(rind) = .true.
       
