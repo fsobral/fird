@@ -7,7 +7,6 @@ module dfoirfilter
   ! PARAMETERS
   real(8), parameter :: BETA = 1.0D-4
   real(8), parameter :: ALPHA = 1.0D-4
-  real(8), parameter :: DELMIN = 1.0D-12
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
   ! Restoration reduction factor
@@ -59,8 +58,8 @@ contains
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
     integer :: i,j,k,iter,jcnnz,m,nf
-    real(8) :: c,currfeas,curropt,dnorm,dxznorm,fx,fy,fz,hxnorm,&
-         hznorm,hynorm
+    real(8) :: c,currfeas,curropt,delta,dnorm,dxznorm,fx,fy,fz,hxnorm,&
+         hznorm,hynorm,rho
 
     iter = 1
 
@@ -75,6 +74,10 @@ contains
     m = me + mi
 
     curropt = sqrt(epsopt)
+
+    rho = 1.0D0
+
+    delta = rho
 
     ! Initialization
     ! TODO: check for errors when allocating
@@ -127,11 +130,12 @@ contains
 !!$             ru(i) = min(u(i),x(i) + BETA * hxnorm)
 !!$          end do
 
-          call restore(n,x,l,u,me,mi,aevalc,aevaljac,currfeas,verbose,hznorm,flag)
+          call restore(n,x,l,u,me,mi,aevalc,aevaljac,currfeas,verbose, &
+               hznorm,flag)
 
           call aevalf(n,x,fz,flag)
 
-          ! TODO: Test alpha and filter conditions. In case of failure,
+          ! Test alpha and filter conditions. In case of failure,
           ! decrease feasibility tolerance.
 
           do i = 1,nf
@@ -158,7 +162,8 @@ contains
 
        end do
 
-       if ( verbose ) WRITE(*,908) fz,hznorm,min(n,MAXNEL),(x(i), i = 1,min(MAXNEL,n))
+       if ( verbose ) WRITE(*,908) fz,hznorm,min(n,MAXNEL), &
+                      (x(i), i = 1,min(MAXNEL,n))
 
        ! ---------------- !
        ! Optimality phase !
@@ -199,15 +204,15 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.true.,fy,  &
-            hynorm,flag)
+            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.false.,delta, &
+            fy,hynorm,rho,flag)
 
        ! Verify convergence conditions
 
        dnorm = evalDist(n,xp,x)
 
-       if ( verbose ) write(*,910) fy,hynorm,dnorm,min(n,MAXNEL),&
-            (x(i), i=1,min(n,MAXNEL))
+       if ( verbose ) write(*,910) fy,hynorm,delta,rho,dnorm, &
+            min(n,MAXNEL),(x(i), i=1,min(n,MAXNEL))
 
        if ( hynorm .le. epsfeas .and. &
             dnorm .le. epsopt ) then
@@ -275,6 +280,7 @@ contains
            3(1X,1PD16.8))
 909 FORMAT(/,'Optimization Phase',/,18('-'),/)
 910 FORMAT(3X,'F(Z+D) =',43X,1PD16.8,/,3X,'H(Z+D) =',43X,D16.8,/,   &
+           3X,'DELTA =',44X,1PD16.8,/,3X,'RHO =',46X,1PD16.8,/,     &
            3X,'||D|| =',44X,D16.8,/,3X,'Optimized point (first',1X, &
            I5,' elements):',/,3X,16X,3(1X,1PD16.8))
 911 FORMAT(/,70('-'),/,'Final Iteration',/,70('-'),/,'F(X) =',48X, &

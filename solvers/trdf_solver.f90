@@ -4,6 +4,9 @@ module trdf_solver
 
   implicit none
 
+  ! PARAMETERS
+  real(8), parameter :: DELMIN = 1.0D-30
+
   ! GLOBAL USER-DEFINED SUBROUTINES
   procedure(evalf  ), pointer :: uevalf
   procedure(evalc  ), pointer :: uevallc,uevalc
@@ -18,7 +21,8 @@ contains
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
   subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
-       nf,alpha,ffilter,hfilter,epsfeas,epsopt,verbose,fy,hynorm,flag)
+       nf,alpha,ffilter,hfilter,epsfeas,epsopt,verbose,delta,fy,hynorm,&
+       rho,flag)
 
     use trdf
 
@@ -27,7 +31,7 @@ contains
     ! SCALAR ARGUMENTS
     logical :: verbose
     integer :: flag,me,mi,n,nf
-    real(8) :: alpha,epsfeas,epsopt,fy,hynorm
+    real(8) :: alpha,delta,epsfeas,epsopt,fy,hynorm,rho
 
     ! ARRAY ARGUMENTS
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
@@ -65,15 +69,17 @@ contains
 
     maxfcnt = 1000 * n
 
-    rbeg = 1.0D0!1.0D-1
+    rbeg = max(10.0D0 * epsopt, rho)
 
     rend = epsopt
 
     xeps = 1.0D-08
 
+    delta = max(DELMIN, rbeg, delta)
+
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
          TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
-         NF,ALPHA,FFILTER,HFILTER,EPSFEAS,FY,HYNORM,FCNT)     
+         NF,ALPHA,FFILTER,HFILTER,DELTA,EPSFEAS,FY,HYNORM,FCNT,RHO)
 
   end subroutine solver
 
