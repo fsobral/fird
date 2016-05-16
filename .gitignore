@@ -6,3 +6,6 @@ lib/**
 
 # ALGENCAN's files
 .silent
+
+# Output files
+*.out
