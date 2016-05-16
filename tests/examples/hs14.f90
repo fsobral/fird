@@ -3,9 +3,9 @@ program FKSSMAIN
   implicit none
 
   ! LOCAL SCALARS
-  integer :: flag,i,me,mi,n
+  integer :: fcnt,flag,i,me,mi,n
   logical :: verbose
-  real(8) :: epsfeas,epsopt
+  real(8) :: epsfeas,epsopt,f,feas
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
@@ -29,7 +29,8 @@ program FKSSMAIN
   epsfeas = 1.0D-4
   epsopt  = 1.0D-4
 
-  call fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,epsfeas,epsopt,flag)
+  call fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,epsfeas,epsopt,&
+       f,feas,fcnt,flag)
 
   deallocate(x,l,u)
 

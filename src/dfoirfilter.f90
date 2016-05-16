@@ -35,16 +35,16 @@ module dfoirfilter
 contains
 
   subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_, &
-       verbose,epsfeas,epsopt,flag)
+       verbose,epsfeas,epsopt,f,feas,fcnt,flag)
 
     use restoration
 
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: flag,me,mi,n
+    integer :: fcnt,flag,me,mi,n
     logical :: verbose
-    real(8) :: epsfeas,epsopt
+    real(8) :: epsfeas,epsopt,f,feas
 
     ! ARRAY ARGUMENTS
     real(8) :: l(n),u(n),x(n)
@@ -207,18 +207,12 @@ contains
             nf,ALPHA,ffilter,hfilter,currfeas,curropt,.false.,delta, &
             fy,hynorm,rho,flag)
 
-       ! Verify convergence conditions
-
        dnorm = evalDist(n,xp,x)
+
+       if ( flag .ne. 0 ) write(*,912) flag
 
        if ( verbose ) write(*,910) fy,hynorm,delta,rho,dnorm, &
             min(n,MAXNEL),(x(i), i=1,min(n,MAXNEL))
-
-       if ( hynorm .le. epsfeas .and. &
-            dnorm .le. epsopt ) then
-          flag = 0
-          exit
-       end if
 
        ! ------------- !
        ! Filter Update !
@@ -252,6 +246,14 @@ contains
        curropt = max(epsopt, dnorm / iter)
        currfeas = max(epsfeas, dnorm / iter)
 
+       ! Verify convergence conditions
+
+       if ( hynorm .le. epsfeas .and. &
+            dnorm .le. epsopt ) then
+          flag = 0
+          exit
+       end if
+
        if ( iter .gt. MAXITER ) then
           flag = 2
           exit
@@ -261,7 +263,14 @@ contains
 
     deallocate(linrhs,linpos,linvar,linval)
 
-    write(*,911) fx,hxnorm,nfev,min(n,MAXNEL),(x(i),i=1,min(n,MAXNEL))
+    if ( verbose ) write(*,911) fx,hxnorm,nfev,min(n,MAXNEL), &
+         (x(i),i=1,min(n,MAXNEL))
+
+    f = fy
+
+    feas = hynorm
+
+    fcnt = nfev
 
     ! NON-EXECUTABLE STATEMENTS
     
@@ -287,6 +296,7 @@ contains
            1PD16.8,/,'H(X) =',48X,D16.8,/,   &
            'Function Evaluations =',28X,I20,/,'Solution (first',1X, &
            I5,' elements):',/,2X,4(1X,1PD16.8))
+912 FORMAT(3X,'WARNING! Solver return FLAG ',I3,'!',/)
 
   end subroutine dfoirfalg
 
