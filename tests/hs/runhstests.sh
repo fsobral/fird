@@ -48,7 +48,7 @@ if (test $# = 1 ) then
     
     EXECNAME=$1;
     
-    ulimit -St 1800 # 30 min of CPU time per problem
+    ulimit -St 60 # 30 min of CPU time per problem
 
     rm -f analysis-all
     

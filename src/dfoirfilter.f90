@@ -6,13 +6,13 @@ module dfoirfilter
 
   ! PARAMETERS
   real(8), parameter :: BETA = 1.0D-4
-  real(8), parameter :: ALPHA = 1.0D-4
+  real(8), parameter :: ALPHA = 1.0D-1
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
   ! Restoration reduction factor
   real(8), parameter :: RESRFAC = 9.5D-01
   ! Maximum number of iterations
-  integer, parameter :: MAXITER = 100
+  integer, parameter :: MAXITER = 10000
   ! Maximum number of printing elements
   integer, parameter :: MAXNEL  = 3
 
@@ -118,6 +118,10 @@ contains
        isalph = .false.
        isbeta = .false.
 
+       fz     = fx
+       hznorm = hxnorm
+       dxznorm = 0.0D0
+
        do while ( hxnorm .gt. epsfeas .and.           &
                   ( isforb .or. ( .not. isalph ) ) )
 
@@ -204,7 +208,7 @@ contains
        end do
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,currfeas,curropt,.true.,delta, &
+            nf,ALPHA,ffilter,hfilter,currfeas,curropt,verbose,delta, &
             fy,hynorm,rho,flag)
 
        dnorm = evalDist(n,xp,x)
@@ -243,8 +247,8 @@ contains
        
        iter = iter + 1
 
-       curropt = max(epsopt, min(rho, dnorm / iter))
-       currfeas = max(epsfeas, dnorm / iter)
+       curropt = max(epsopt, min(rho, dnorm) / (1.1D0 ** iter))
+       currfeas = max(epsfeas, dnorm / (1.1D0 ** iter))
 
        ! Verify convergence conditions
 
