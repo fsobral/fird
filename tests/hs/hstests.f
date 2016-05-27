@@ -112,7 +112,7 @@ C     Some HS problems do not have derivatives of the constraints
          stop
       end if
 
-      VERBOSE = .false.
+      VERBOSE = .true.
 
       EPSFEAS = 1.0D-04
       

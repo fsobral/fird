@@ -15,6 +15,8 @@ module dfoirfilter
   integer, parameter :: MAXITER = 10000
   ! Maximum number of printing elements
   integer, parameter :: MAXNEL  = 3
+  ! Minimum trust region radius
+  real(8), parameter :: DELMIN = 1.0D-30
 
   ! ARRAYS
   integer, allocatable :: linpos(:),linvar(:)
@@ -207,6 +209,10 @@ contains
           xp(i) = x(i)
        end do
 
+       rho = max(10.0D0 * curropt, rho)
+
+       delta = max(DELMIN, rho, delta)
+
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
             nf,ALPHA,ffilter,hfilter,currfeas,curropt,verbose,delta, &
             fy,hynorm,rho,flag)
@@ -247,8 +253,9 @@ contains
        
        iter = iter + 1
 
+       currfeas = max(epsfeas, min(hynorm, currfeas) * curropt)
+
        curropt = max(epsopt, min(rho, dnorm) / (1.1D0 ** iter))
-       currfeas = max(epsfeas, dnorm / (1.1D0 ** iter))
 
        ! Verify convergence conditions
 

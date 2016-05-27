@@ -4,9 +4,6 @@ module trdf_solver
 
   implicit none
 
-  ! PARAMETERS
-  real(8), parameter :: DELMIN = 1.0D-30
-
   ! GLOBAL USER-DEFINED SUBROUTINES
   procedure(evalf  ), pointer :: uevalf
   procedure(evalc  ), pointer :: uevallc,uevalc
@@ -62,20 +59,24 @@ contains
        linear(i) = .true.
     end do
 
-    NPT = 2 * N + 3
+    if ( N .le. 2 ) then
+       NPT = 2 * N + 1
+    else
+       NPT = 2 * N + 3
+    end if
 
     ccoded(1) = .true.
     ccoded(2) = .true.
 
     maxfcnt = 1000 * n
 
-    rbeg = max(10.0D0 * epsopt, rho)
+    rbeg = rho !max(10.0D0 * epsopt, rho)
 
     rend = epsopt
 
     xeps = 1.0D-08
 
-    delta = max(DELMIN, rbeg, delta)
+    !delta = max(DELMIN, rbeg, delta)
 
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
          TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
