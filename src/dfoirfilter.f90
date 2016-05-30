@@ -5,7 +5,7 @@ module dfoirfilter
   implicit none
 
   ! PARAMETERS
-  real(8), parameter :: BETA = 1.0D-4
+  real(8), parameter :: BETA = 1.0D+04
   real(8), parameter :: ALPHA = 1.0D-1
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
@@ -17,6 +17,8 @@ module dfoirfilter
   integer, parameter :: MAXNEL  = 3
   ! Minimum trust region radius
   real(8), parameter :: DELMIN = 1.0D-30
+  ! Initial value of RHO
+  real(8), parameter :: RHOINI = 1.0D0
 
   ! ARRAYS
   integer, allocatable :: linpos(:),linvar(:)
@@ -77,7 +79,7 @@ contains
 
     curropt = sqrt(epsopt)
 
-    rho = 1.0D0
+    rho = RHOINI
 
     delta = rho
 
