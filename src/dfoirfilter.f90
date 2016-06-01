@@ -6,7 +6,7 @@ module dfoirfilter
 
   ! PARAMETERS
   real(8), parameter :: BETA = 1.0D+04
-  real(8), parameter :: ALPHA = 1.0D-1
+  real(8), parameter :: ALPHA = 1.0D-4
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
   ! Restoration reduction factor
@@ -62,7 +62,7 @@ contains
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
     integer :: i,j,k,iter,jcnnz,m,nf
-    real(8) :: c,currfeas,curropt,delta,dnorm,dxznorm,fx,fy,fz,hxnorm,&
+    real(8) :: c,currfeas,delta,dnorm,dxznorm,fx,fy,fz,hxnorm,&
          hznorm,hynorm,rho
 
     iter = 1
@@ -76,8 +76,6 @@ contains
     uevaljac => evaljac_
 
     m = me + mi
-
-    curropt = sqrt(epsopt)
 
     rho = RHOINI
 
@@ -211,12 +209,12 @@ contains
           xp(i) = x(i)
        end do
 
-       rho = max(10.0D0 * curropt, rho)
-
        delta = max(DELMIN, rho, delta)
 
+       rho = max(10.0D0 * epsopt, delta)
+
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,currfeas,curropt,verbose,delta, &
+            nf,ALPHA,ffilter,hfilter,currfeas,epsopt,verbose,delta, &
             fy,hynorm,rho,flag)
 
        dnorm = evalDist(n,xp,x)
@@ -255,9 +253,7 @@ contains
        
        iter = iter + 1
 
-       currfeas = max(epsfeas, min(hynorm, currfeas) * curropt)
-
-       curropt = max(epsopt, min(rho, dnorm) / (1.1D0 ** iter))
+       currfeas = max(epsfeas, min(hynorm, currfeas) * rho)
 
        ! Verify convergence conditions
 
