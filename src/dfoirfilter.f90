@@ -5,8 +5,8 @@ module dfoirfilter
   implicit none
 
   ! PARAMETERS
-  real(8), parameter :: BETA = 1.0D+04
-  real(8), parameter :: ALPHA = 1.0D-4
+  real(8), parameter :: BETA = 1.0D+03
+  real(8), parameter :: ALPHA = 1.0D-1
   real(8), parameter :: MU = 1.0D-1
   real(8), parameter :: ETA = 2.5D-1
   ! Restoration reduction factor
@@ -14,7 +14,7 @@ module dfoirfilter
   ! Maximum number of iterations
   integer, parameter :: MAXITER = 10000
   ! Maximum number of printing elements
-  integer, parameter :: MAXNEL  = 3
+  integer, parameter :: MAXNEL  = 20
   ! Minimum trust region radius
   real(8), parameter :: DELMIN = 1.0D-30
   ! Initial value of RHO
@@ -112,6 +112,8 @@ contains
 
        xp(1:n) = x(1:n)
 
+       ! Update current feasibility
+       
        currfeas = max(epsfeas, min(currfeas, (1.0D0 - ALPHA) * hxnorm))
 
        if ( verbose ) write(*,905)
@@ -252,8 +254,6 @@ contains
        hxnorm = hynorm
        
        iter = iter + 1
-
-       currfeas = max(epsfeas, min(hynorm, currfeas) * rho)
 
        ! Verify convergence conditions
 
