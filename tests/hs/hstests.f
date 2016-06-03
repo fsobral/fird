@@ -108,13 +108,13 @@ C     Some HS problems do not have derivatives of the constraints
       if ( NTP .eq. 348 .or. NTP .eq. 332 .or. NTP .eq. 365 .or. 
      +     NTP .eq. 362 .or. NTP .eq. 363 .or. NTP .eq. 364 .or.
      +     NTP .eq. 365 .or. NTP .eq. 366 .or. NTP .eq. 369 .or.
-     +     NTP .eq. 390 .or. NTP .eq. 393 ) then
+     +     NTP .eq. 390 .or. NTP .eq. 392 .or. NTP .eq. 393 ) then
          stop
       end if
 
       VERBOSE = .true.
 
-      EPSFEAS = 1.0D-04
+      EPSFEAS = 1.0D-08
       
       EPSOPT = 1.0D-04
 
