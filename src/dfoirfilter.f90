@@ -116,7 +116,7 @@ contains
 
        ! Update current feasibility
        
-       currfeas = max(epsfeas, min(currfeas, (1.0D0 - ALPHA) * hxnorm))
+       currfeas = max(epsfeas, min((1.0D0 - ALPHA) * hxnorm, hxnorm * dzynorm))
 
        if ( verbose ) write(*,905)
 
@@ -142,6 +142,17 @@ contains
 
           call restore(n,x,l,u,me,mi,aevalc,aevaljac,currfeas,verbose, &
                hznorm,flag)
+
+          if ( flag .ne. 0 ) then
+             Write(*,*) 'Problems in the restoration solver.'
+             exit
+          end if
+          
+          if ( hznorm .gt. currfeas ) then
+             write(*,*) 'Unable to reach desired feasibility.'
+             flag = 4
+             exit
+          end if
 
           call aevalf(n,x,fz,flag)
 
@@ -171,6 +182,8 @@ contains
           end if
 
        end do
+
+       if ( flag .ne. 0 ) exit
 
        if ( verbose ) WRITE(*,908) fz,hznorm,min(n,MAXNEL), &
                       (x(i), i = 1,min(MAXNEL,n))
