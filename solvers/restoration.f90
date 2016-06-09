@@ -129,7 +129,7 @@ contains
     ! LOCAL SCALARS
     logical :: checkder
     integer :: hnnzmax,jcnnzmax,m,nvparam
-    real(8) :: aepsfeas,cnorm,efacc,efstain,eoacc,eostain,epsopt,nlpsupn,snorm
+    real(8) :: aepsfeas,efacc,efstain,eoacc,eostain,epsopt,f,nlpsupn,snorm
 
     ! LOCAL ARRAYS
     integer           :: i
@@ -149,7 +149,7 @@ contains
     end do
 
     aepsfeas =  epsfeas
-    epsopt   =  1.0D-08
+    epsopt   =  1.0D-01
 
     checkder = .false.
 
@@ -168,7 +168,8 @@ contains
     linear(     1: m) = .false.
 
     efstain   = sqrt(aepsfeas)
-    eostain   = epsopt ** 1.5d0
+    ! Disable early stopping criterium
+    eostain   = - 1.0D0
 
     efacc     = sqrt(aepsfeas)
     eoacc     = sqrt(epsopt  )
@@ -185,8 +186,7 @@ contains
          r_evalfc,r_evalgjac,r_evalgjacp,r_evalhl,r_evalhlp,jcnnzmax, &
          hnnzmax,aepsfeas,epsopt,efstain,eostain,efacc,eoacc,outputfnm, &
          specfnm,nvparam,vparam,n,x,l,u,m,lambda,equatn,linear,coded, &
-         checkder,infeas,cnorm,snorm,nlpsupn,flag)
-
+         checkder,f,infeas,snorm,nlpsupn,flag)
 
   end subroutine restore
 
