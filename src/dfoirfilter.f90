@@ -62,7 +62,7 @@ contains
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
     integer :: i,j,k,iter,jcnnz,m,nf
-    real(8) :: c,currfeas,delta,dnorm,dxznorm,fx,fy,fz,hxnorm,&
+    real(8) :: c,currfeas,delta,dzynorm,dxznorm,fx,fy,fz,hxnorm,&
          hznorm,hynorm,rho
 
     iter = 1
@@ -86,9 +86,11 @@ contains
 
     allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
 
-    hxnorm = evalinfeas(n,x,me,mi,flag)
+    hxnorm = evalinfeas(n,x,l,u,me,mi,flag)
 
     currfeas = hxnorm
+
+    dzynorm = 1.0D+20
 
     call aevalf(n,x,fx,flag)
 
@@ -189,15 +191,15 @@ contains
 
           ! Just for inequalities
           if ( i .gt. me ) then
-             call aevalc(n,x,i,linrhs(i),flag)
-             linrhs(i) = linrhs(i) - max(0.0D0, linrhs(i))
+             call aevalc(n,x,i,c,flag)
+             linrhs(i) = max(0.0D0, c) - c
           end if
 
           call aevaljac(n,x,i,linvar(k),linval(k),jcnnz,flag)
           linpos(i) = k
 
           do j = k,k + jcnnz - 1
-             linrhs(i) = linrhs(i) - linval(j) * x(linvar(j))
+             linrhs(i) = linrhs(i) + linval(j) * x(linvar(j))
           end do
 
           k = k + jcnnz
@@ -213,18 +215,19 @@ contains
 
        delta = max(DELMIN, rho, delta)
 
-       rho = max(10.0D0 * epsopt, delta)
+!       rho = max(10.0D0 * epsopt, delta)
+       rho = max(10.0D0 * epsopt, min(delta, dzynorm))
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
             nf,ALPHA,ffilter,hfilter,currfeas,epsopt,verbose,delta, &
             fy,hynorm,rho,flag)
 
-       dnorm = evalDist(n,xp,x)
+       dzynorm = evalDist(n,xp,x)
 
        if ( flag .ne. 0 ) write(*,912) flag
 
-       if ( verbose ) write(*,910) fy,hynorm,delta,rho,dnorm, &
-            min(n,MAXNEL),(x(i), i=1,min(n,MAXNEL))
+       if ( verbose ) write(*,910) fy,hynorm,delta,rho,dzynorm, &
+            nfev,min(n,MAXNEL),(x(i), i=1,min(n,MAXNEL))
 
        ! ------------- !
        ! Filter Update !
@@ -258,7 +261,7 @@ contains
        ! Verify convergence conditions
 
        if ( hynorm .le. epsfeas .and. &
-            dnorm .le. epsopt ) then
+            dzynorm .le. epsopt ) then
           flag = 0
           exit
        end if
@@ -288,23 +291,24 @@ contains
 901 FORMAT('H-iteration: the pair (',1PD17.8,',',1PD17.8,') was added.',/)
 902 FORMAT('F-iteration.',/)
 903 FORMAT(/,'Filter update',/,13('-'))
-904 FORMAT('Current point (first',1X,I5,' elements):',/,2X, &
-           4(1X,1PD16.8))
+904 FORMAT('Current point (first',1X,I5,' elements):',/, &
+           (2X,4(1X,1PD16.8)))
 905 FORMAT(/,'Restoration Phase',/,17('-'),/)
 906 FORMAT(3X,'Forbidden?',56X,L,/,3X,'Alpha?',60X,L,/,3X,'Beta?',61X,L,/)
 907 FORMAT(3X,'Updated feasibility requirement to',27X,E9.1,/)
 908 FORMAT(3X,'F(Z) =',45X,1PD16.8,/,3X,'H(Z) =',45X,D16.8,/,3X, &
-           'Restored point (first',1X,I5,' elements):',/,3X,16X, &
-           3(1X,1PD16.8))
+           'Restored point (first',1X,I5,' elements):',/, &
+           (3X,16X,3(1X,1PD16.8)))
 909 FORMAT(/,'Optimization Phase',/,18('-'),/)
 910 FORMAT(3X,'F(Z+D) =',43X,1PD16.8,/,3X,'H(Z+D) =',43X,D16.8,/,   &
            3X,'DELTA =',44X,1PD16.8,/,3X,'RHO =',46X,1PD16.8,/,     &
-           3X,'||D|| =',44X,D16.8,/,3X,'Optimized point (first',1X, &
-           I5,' elements):',/,3X,16X,3(1X,1PD16.8))
+           3X,'||D|| =',44X,D16.8,/,3X,'Number of f evaluat. =',1X, &
+           I44,/,3X,'Optimized point (first',1X, &
+           I5,' elements):',/,(3X,16X,3(1X,1PD16.8)))
 911 FORMAT(/,70('-'),/,'Final Iteration',/,70('-'),/,'F(X) =',48X, &
            1PD16.8,/,'H(X) =',48X,D16.8,/,   &
            'Function Evaluations =',28X,I20,/,'Solution (first',1X, &
-           I5,' elements):',/,2X,4(1X,1PD16.8))
+           I5,' elements):',/,(2X,4(1X,1PD16.8)))
 912 FORMAT(3X,'WARNING! Solver return FLAG ',I3,'!',/)
 
   end subroutine dfoirfalg
@@ -339,12 +343,12 @@ contains
   !                                                          !
   !----------------------------------------------------------!
 
-  function evalinfeas(n,x,me,mi,flag)
+  function evalinfeas(n,x,l,u,me,mi,flag)
 
     implicit none
 
     integer :: flag,me,mi,n
-    real(8) :: x(n)
+    real(8) :: l(n),u(n),x(n)
 
     real(8) :: evalinfeas
 
@@ -352,6 +356,9 @@ contains
     integer :: i
 
     evalinfeas = 0.0D0
+    do i = 1,n
+       evalinfeas = max(evalinfeas, x(i) - u(i), l(i) - x(i))
+    end do
     do i = 1,me
        call uevalc(n,x,i,c,flag)
        evalinfeas = max(evalinfeas, abs(c))
