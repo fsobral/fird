@@ -116,7 +116,8 @@ contains
 
        ! Update current feasibility
        
-       currfeas = max(epsfeas, min((1.0D0 - ALPHA) * hxnorm, hxnorm * dzynorm))
+!       currfeas = max(epsfeas, min((1.0D0 - ALPHA) * hxnorm, hxnorm * dzynorm))
+       currfeas = max(epsfeas, (1.0D0 - ALPHA) * hxnorm)
 
        if ( verbose ) write(*,905)
 
@@ -228,8 +229,8 @@ contains
 
        delta = max(DELMIN, rho, delta)
 
-!       rho = max(10.0D0 * epsopt, delta)
-       rho = max(10.0D0 * epsopt, min(delta, dzynorm))
+       rho = max(10.0D0 * epsopt, delta)
+!       rho = max(10.0D0 * epsopt, min(delta, dzynorm))
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
             nf,ALPHA,ffilter,hfilter,currfeas,epsopt,verbose,delta, &
