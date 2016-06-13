@@ -12,7 +12,7 @@ module dfoirfilter
   ! Restoration reduction factor
   real(8), parameter :: RESRFAC = 9.5D-01
   ! Maximum number of iterations
-  integer, parameter :: MAXITER = 10000
+  integer, parameter :: MAXOUTITER = 10000
   ! Maximum number of printing elements
   integer, parameter :: MAXNEL  = 20
   ! Minimum trust region radius
@@ -57,15 +57,15 @@ contains
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
-    real(8) :: ffilter(MAXITER),hfilter(MAXITER),rl(n),ru(n),xp(n)
+    real(8) :: ffilter(MAXOUTITER),hfilter(MAXOUTITER),rl(n),ru(n),xp(n)
 
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
-    integer :: i,j,k,iter,jcnnz,m,nf
+    integer :: i,j,k,outiter,jcnnz,m,nf
     real(8) :: c,currfeas,delta,dzynorm,dxznorm,fx,fy,fz,hxnorm,&
          hznorm,hynorm,rho
 
-    iter = 1
+    outiter = 1
 
     nfev = 0
     ncev = 0
@@ -81,7 +81,10 @@ contains
 
     delta = rho
 
-    ! Initialization
+    !----------------!
+    ! Initialization !
+    !----------------!
+
     ! TODO: check for errors when allocating
 
     allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
@@ -105,7 +108,7 @@ contains
        ffilter(nf) = fx
        hfilter(nf) = hxnorm
 
-       if ( verbose ) write(*,900) iter,fx,hxnorm
+       if ( verbose ) write(*,900) outiter,fx,hxnorm
        if ( verbose ) write(*,904) min(MAXNEL,n),(x(i), i = 1,min(MAXNEL,n))
 
        ! ----------------- !
@@ -233,8 +236,8 @@ contains
 !       rho = max(10.0D0 * epsopt, min(delta, dzynorm))
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,currfeas,epsopt,verbose,delta, &
-            fy,hynorm,rho,flag)
+            nf,ALPHA,ffilter,hfilter,outiter,currfeas, &
+            epsopt,verbose,delta,fy,hynorm,rho,flag)
 
        dzynorm = evalDist(n,xp,x)
 
@@ -270,7 +273,7 @@ contains
 
        hxnorm = hynorm
        
-       iter = iter + 1
+       outiter = outiter + 1
 
        ! Verify convergence conditions
 
@@ -280,7 +283,7 @@ contains
           exit
        end if
 
-       if ( iter .gt. MAXITER ) then
+       if ( outiter .gt. MAXOUTITER ) then
           flag = 2
           exit
        end if
@@ -300,7 +303,7 @@ contains
 
     ! NON-EXECUTABLE STATEMENTS
     
-900 FORMAT(/,70('-'),/,'Iteration',I61,/,70('-'),/,/,'F(X) = ', &
+900 FORMAT(/,70('-'),/,'Outer iteration',I55,/,70('-'),/,/,'F(X) = ', &
            40X,1PD23.8,/,'H(X) = ',40X,1PD23.8)
 901 FORMAT('H-iteration: the pair (',1PD17.8,',',1PD17.8,') was added.',/)
 902 FORMAT('F-iteration.',/)

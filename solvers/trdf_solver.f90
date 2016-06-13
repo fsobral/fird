@@ -18,8 +18,8 @@ contains
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
   subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
-       nf,alpha,ffilter,hfilter,epsfeas,epsopt,verbose,delta,fy,hynorm,&
-       rho,flag)
+       nf,alpha,ffilter,hfilter,outiter,epsfeas,epsopt,verbose, &
+       delta,fy,hynorm,rho,flag)
 
     use trdf
 
@@ -27,7 +27,7 @@ contains
 
     ! SCALAR ARGUMENTS
     logical :: verbose
-    integer :: flag,me,mi,n,nf
+    integer :: flag,me,mi,n,nf,outiter
     real(8) :: alpha,delta,epsfeas,epsopt,fy,hynorm,rho
 
     ! ARRAY ARGUMENTS
@@ -80,7 +80,8 @@ contains
 
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
          TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
-         NF,ALPHA,FFILTER,HFILTER,DELTA,EPSFEAS,FY,HYNORM,FCNT,RHO)
+         NF,ALPHA,FFILTER,HFILTER,OUTITER,DELTA,EPSFEAS,FY, &
+         HYNORM,FCNT,RHO,FLAG)
 
   end subroutine solver
 
