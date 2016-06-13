@@ -475,7 +475,7 @@ contains
     start = linpos(ind)
     end   = linpos(ind + 1) - 1
 
-    c = linrhs(ind)
+    c = - linrhs(ind)
 
     do i = start,end
        c = c + linval(i) * x(linvar(i))
