@@ -58,11 +58,10 @@ contains
 
     ! LOCAL ARRAYS
     real(8) :: ffilter(MAXOUTITER),hfilter(MAXOUTITER),rl(n),ru(n),xp(n)
-    real(8), allocatable :: interpset(:,:)
 
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
-    integer :: i,j,k,outiter,jcnnz,m,nf,npt
+    integer :: i,j,k,outiter,jcnnz,m,nf
     real(8) :: c,currfeas,delta,dzynorm,dxznorm,fx,fy,fz,hxnorm,&
          hznorm,hynorm,rho
 
@@ -86,16 +85,9 @@ contains
     ! Initialization !
     !----------------!
 
-    if ( N .le. 2 ) then
-       npt = 2 * N + 1
-    else
-       npt = 2 * N + 3
-    end if
-
     ! TODO: check for errors when allocating
 
     allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
-    allocate(interpset(npt,n))
 
     hxnorm = evalinfeas(n,x,l,u,me,mi,flag)
 
@@ -244,7 +236,7 @@ contains
 !       rho = max(10.0D0 * epsopt, min(delta, dzynorm))
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,npt,interpset,outiter,currfeas, &
+            nf,ALPHA,ffilter,hfilter,outiter,currfeas, &
             epsopt,verbose,delta,fy,hynorm,rho,flag)
 
        dzynorm = evalDist(n,xp,x)

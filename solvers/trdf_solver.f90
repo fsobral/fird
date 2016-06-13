@@ -18,7 +18,7 @@ contains
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
   subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
-       nf,alpha,ffilter,hfilter,npt,interpset,outiter,epsfeas,epsopt,verbose, &
+       nf,alpha,ffilter,hfilter,outiter,epsfeas,epsopt,verbose, &
        delta,fy,hynorm,rho,flag)
 
     use trdf
@@ -27,17 +27,17 @@ contains
 
     ! SCALAR ARGUMENTS
     logical :: verbose
-    integer :: flag,me,mi,n,nf,npt,outiter
+    integer :: flag,me,mi,n,nf,outiter
     real(8) :: alpha,delta,epsfeas,epsopt,fy,hynorm,rho
 
     ! ARRAY ARGUMENTS
-    real(8) :: ffilter(nf),hfilter(nf),interpset(npt,n),l(n),u(n),y(n)
+    real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
 
     ! EXTERNAL SUBROUTINES
     external :: uevalf_,uevallc_,uevalljac_,uevalc_
 
     ! LOCAL SCALARS
-    integer :: i,m,maxfcnt,fcnt
+    integer :: i,m,maxfcnt,npt,fcnt
     real(8) :: rbeg,rend,xeps
 
     ! LOCAL ARRAYS
@@ -59,11 +59,11 @@ contains
        linear(i) = .true.
     end do
 
-!!$    if ( N .le. 2 ) then
-!!$       NPT = 2 * N + 1
-!!$    else
-!!$       NPT = 2 * N + 3
-!!$    end if
+    if ( N .le. 2 ) then
+       NPT = 2 * N + 1
+    else
+       NPT = 2 * N + 3
+    end if
 
     ccoded(1) = .true.
     ccoded(2) = .true.
@@ -80,7 +80,7 @@ contains
 
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
          TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
-         NF,ALPHA,FFILTER,HFILTER,INTERPSET,OUTITER,DELTA,EPSFEAS,FY, &
+         NF,ALPHA,FFILTER,HFILTER,OUTITER,DELTA,EPSFEAS,FY, &
          HYNORM,FCNT,RHO,FLAG)
 
   end subroutine solver
