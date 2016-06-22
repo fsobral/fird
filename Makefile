@@ -61,7 +61,7 @@ hstests: all
 	$(FCC) tests/hs/hstests.f -lhs $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
 clean:
-	rm -vf *~ $(LIB)/* $(BIN)/* $(OBJ)/*
+	rm -vfr *~ $(LIB)/* $(BIN)/* $(OBJ)/*
 	$(foreach i,$(SRC) $(SOL) $(TES),$(MAKE) -C $(i) clean;)
 
 .PHONY: lib all clean
