@@ -155,7 +155,7 @@ contains
 
     m = me + mi
 
-    hnnzmax  = n ** 2
+    hnnzmax  = n
     jcnnzmax =  n * m
 
     coded(1:11) = .false.
@@ -274,6 +274,8 @@ contains
     integer :: i
 
     lmem = .false.
+
+    hnnz = n
 
     do i = 1,n
        hcol(i) = i
