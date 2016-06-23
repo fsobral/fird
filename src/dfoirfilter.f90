@@ -187,7 +187,7 @@ contains
 
        end do
 
-       if ( flag .ne. 0 ) exit
+       if ( flag .ne. 0 .and. outiter .gt. 1 ) exit
 
        if ( verbose ) WRITE(*,908) fz,hznorm,min(n,MAXNEL), &
                       (x(i), i = 1,min(MAXNEL,n))
