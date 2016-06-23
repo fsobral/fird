@@ -14544,10 +14544,10 @@ C
  4    IF (INDEX1(1))  G(1)=0.1D+4*X(1)**2+0.1D+3*X(2)**2-X(3)
       IF (INDEX1(2))  G(2)=0.1D+3*X(1)**2+0.4D+3*X(2)**2+X(3)-0.1D-1  
       RETURN
- 5    IF (.NOT. INDEX2(1))  GOTO 7
+ 5    IF (.NOT. INDEX2(1))  GOTO 51
       GG(1,1)=0.2D+4*X(1)
       GG(1,2)=0.2D+3*X(2)
-      IF (.NOT. INDEX2(2))  GOTO 7
+ 51   IF (.NOT. INDEX2(2))  GOTO 7
       GG(2,1)=0.2D+3*X(1)
       GG(2,2)=0.8D+3*X(2)
  7    RETURN
