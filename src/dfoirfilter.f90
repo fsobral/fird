@@ -41,6 +41,21 @@ contains
   subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_, &
        verbose,epsfeas,epsopt,f,feas,fcnt,flag)
 
+    ! This subroutine uses the Derivative-free Inexact Restoration
+    ! Filter algorithm described in
+    !
+    ! "Global convergence of a derivative-free inexact restoration
+    ! filter algorithm for nonlinear programming" P.S. Ferreira,
+    ! E.W. Karas, M. Sachine and F.N.C. Sobral, Submitted, 2016.
+    !
+    ! The flag output means
+    !
+    ! 0  - Solution was found
+    ! 1  - Maximum number of OUTER iterations was reached
+    ! 2  - Maximum number of obj. function evaluations was reached
+    ! 3x - Failure in the restoration phase
+    ! 4x - Failure in the optimization phase
+
     use restoration
 
     implicit none
@@ -104,7 +119,6 @@ contains
     do while ( .true. )
 
        ! Creates the temporary filter \hat F
-       ! TODO: Change this!
        ffilter(nf) = fx
        hfilter(nf) = hxnorm
 
