@@ -40,11 +40,11 @@ all: lib
 	mkdir -p $(BIN)
 
 base:
+	mkdir -p $(LIB)
 	$(MAKE) -C $(SRC) base
 
 # Generate the main FKSS library
 lib: base
-	mkdir -p $(LIB)
 	$(MAKE) -C $(SOL) install
 	$(MAKE) -C $(SRC) all install
 
