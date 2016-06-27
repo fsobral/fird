@@ -1,5 +1,5 @@
 !-------------------------------------------------------------------!
-! SUBROUTINE RESTORATION                                            !
+! SUBROUTINE RESTORE                                                !
 !-------------------------------------------------------------------!
 !
 ! Users should modify this subroutine in order to have his/her own
