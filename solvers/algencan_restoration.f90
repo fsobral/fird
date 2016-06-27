@@ -35,7 +35,8 @@ contains
     intent(inout) :: x
 
     ! EXTERNAL SUBROUTINES
-    external :: uevalc,uevaljac
+    procedure(evalc)   :: uevalc
+    procedure(evaljac) :: uevaljac
 
     ! INTERFACES
     interface

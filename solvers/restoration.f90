@@ -20,6 +20,7 @@
 subroutine restore(n,x,l,u,me,mi,uevalc,uevaljac,epsfeas,verbose, &
      infeas,flag)
 
+  use userinterface, only: evalc, evaljac
   use algencan_restoration
 
   implicit none
@@ -37,7 +38,8 @@ subroutine restore(n,x,l,u,me,mi,uevalc,uevaljac,epsfeas,verbose, &
   intent(inout) :: x
 
   ! EXTERNAL SUBROUTINES
-  external :: uevalc,uevaljac
+  procedure(evalc)   :: uevalc
+  procedure(evaljac) :: uevaljac
 
   call algrestore(n,x,l,u,me,mi,uevalc,uevaljac,epsfeas,verbose, &
        infeas,flag)

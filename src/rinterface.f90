@@ -1,5 +1,7 @@
 module rinterface
 
+  use userinterface
+
   abstract interface
      subroutine restoration(n,x,l,u,me,mi,uevalc,uevaljac, &
           epsfeas,verbose,infeas,flag)
@@ -45,7 +47,8 @@ module rinterface
        real(8) :: l(n),u(n),x(n)
 
        ! EXTERNAL SUBROUTINES
-       external :: uevalc,uevaljac
+       procedure(evalc)   :: uevalc
+       procedure(evaljac) :: uevaljac
 
        intent(in   ) :: epsfeas,l,me,mi,n,u,verbose
        intent(out  ) :: flag,infeas
