@@ -1,6 +1,9 @@
 install: $(RESTORATION_INTERFACE).o $(OPTIMIZATION_INTERFACE).o
 
-restoration.o: restoration.f90
+restoration.o: restoration.f90 algencan_restoration.o
+	$(FC) -c $(FCC) -I$(MODULES) -J$(LIB) $< -o $@
+
+algencan_restoration.o: algencan_restoration.f90
 	$(FC) -c $(FCC) -I$(MODULES) -J$(LIB) $< -o $@
 
 trdf_solver.o: trdf_solver.f90

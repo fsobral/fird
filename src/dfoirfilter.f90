@@ -56,7 +56,7 @@ contains
     ! 3x - Failure in the restoration phase
     ! 4x - Failure in the optimization phase
 
-    use restoration
+    use rinterface, only: restoration
 
     implicit none
 
@@ -69,6 +69,7 @@ contains
     real(8) :: l(n),u(n),x(n)
 
     ! EXTERNAL SUBROUTINES
+    procedure(restoration) :: restore
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS
@@ -158,8 +159,8 @@ contains
 !!$             ru(i) = min(u(i),x(i) + BETA * hxnorm)
 !!$          end do
 
-          call restore(n,x,l,u,me,mi,aevalc,aevaljac,currfeas,verbose, &
-               hznorm,flag)
+          call restore(n,x,l,u,me,mi,aevalc,aevaljac, &
+               currfeas,verbose,hznorm,flag)
 
           if ( flag .ne. 0 ) then
              Write(*,*) 'Problems in the restoration solver.'

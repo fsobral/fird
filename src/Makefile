@@ -1,4 +1,4 @@
-base: userinterface.mod
+base: userinterface.mod rinterface.mod
 
 install:
 	mkdir -p $(LIB)
@@ -14,6 +14,8 @@ dfoirfilter.o: dfoirfilter.f90
 	$(FC) -c -J$(LIB) $< -o $@
 
 userinterface.mod: userinterface.o
+
+rinterface.mod: rinterface.o
 
 %.o: %.f90
 	$(FC) -c -J$(LIB) $^ -o $@
