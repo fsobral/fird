@@ -9,7 +9,7 @@ algencan_restoration.o: algencan_restoration.f90
 trdf_solver.o: trdf_solver.f90
 	$(FC) -c $(FCC) -I$(MODULES) -J$(LIB) $< -o $@
 
-trdf_solver_interface.o: trdf_solver_interface.f90 trdf_solver.o
+optimization.o: optimization.f90 trdf_solver.o
 	$(FC) -c $(FCC) -I$(MODULES) -J$(LIB) $< -o $@
 
 clean:

@@ -57,6 +57,7 @@ contains
     ! 4x - Failure in the optimization phase
 
     use rinterface, only: restoration
+    use ointerface, only: optimization
 
     implicit none
 
@@ -69,7 +70,8 @@ contains
     real(8) :: l(n),u(n),x(n)
 
     ! EXTERNAL SUBROUTINES
-    procedure(restoration) :: restore
+    procedure(restoration)  :: restore
+    procedure(optimization) :: qpsolver
     external :: evalf_,evalc_,evaljac_
 
     ! LOCAL ARRAYS

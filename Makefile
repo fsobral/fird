@@ -25,7 +25,7 @@ FCC =
 SOLVERLIB = /opt/tango/algencan-3.0.0/lib $(FKSS_HOME)/../trdf/lib
 MODULES=$(FKSS_HOME)/../trdf/src
 RESTORATION_INTERFACE = restoration
-OPTIMIZATION_INTERFACE = trdf_solver_interface
+OPTIMIZATION_INTERFACE = optimization
 
 # The following order do matters!
 SLOPTS = -ldfoirfilter -ltrdf -lalgencan 
