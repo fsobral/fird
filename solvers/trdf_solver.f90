@@ -18,7 +18,7 @@ contains
   ! Uses the adapted TRDF algorithm for solving the optimality phase
 
   subroutine solver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
-       nf,alpha,ffilter,hfilter,outiter,epsfeas,epsopt,verbose, &
+       nf,alpha,ffilter,hfilter,filterTest,outiter,epsfeas,epsopt,verbose, &
        delta,fy,hynorm,rho,flag)
 
     use trdf
@@ -35,6 +35,7 @@ contains
 
     ! EXTERNAL SUBROUTINES
     external :: uevalf_,uevallc_,uevalljac_,uevalc_
+    logical, external :: filterTest
 
     ! LOCAL SCALARS
     integer :: i,m,maxfcnt,npt,fcnt
@@ -80,7 +81,7 @@ contains
 
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
          TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
-         NF,ALPHA,FFILTER,HFILTER,OUTITER,DELTA,EPSFEAS,FY, &
+         NF,ALPHA,FFILTER,HFILTER,FILTERTEST,OUTITER,DELTA,EPSFEAS,FY, &
          HYNORM,FCNT,RHO,FLAG)
 
   end subroutine solver

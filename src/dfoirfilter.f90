@@ -58,6 +58,7 @@ contains
 
     use rinterface, only: restoration
     use ointerface, only: optimization
+    use filters   , only: absfilter,flatFilter,slantingFilter
 
     implicit none
 
@@ -83,6 +84,13 @@ contains
     real(8) :: c,currfeas,delta,dzynorm,dxznorm,fx,fy,fz,hxnorm,&
          hznorm,hynorm,rho
 
+    ! LOCAL POINTERS
+    procedure(absfilter), pointer :: filterTest
+
+    !----------------!
+    ! Initialization !
+    !----------------!
+
     outiter = 1
 
     nfev = 0
@@ -93,15 +101,13 @@ contains
     uevalc   => evalc_
     uevaljac => evaljac_
 
+    filterTest => flatFilter
+
     m = me + mi
 
     rho = RHOINI
 
     delta = rho
-
-    !----------------!
-    ! Initialization !
-    !----------------!
 
     ! TODO: check for errors when allocating
 
@@ -181,7 +187,7 @@ contains
           ! decrease feasibility tolerance. The beta test is only for
           ! display purposes.
 
-          isforb = flatFilter(fz,hznorm,nf,ffilter,hfilter,ALPHA)
+          isforb = filterTest(fz,hznorm,ALPHA,nf,ffilter,hfilter)
 
           dxznorm = evalDist(n,xp,x)
 
@@ -247,8 +253,11 @@ contains
 !       rho = max(10.0D0 * epsopt, delta)
        rho = max(10.0D0 * epsopt, min(delta, dzynorm))
 
+       fy     = fz
+       hynorm = hznorm
+
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
-            nf,ALPHA,ffilter,hfilter,outiter,currfeas, &
+            nf,ALPHA,ffilter,hfilter,filterTest,outiter,currfeas, &
             epsopt,verbose,delta,fy,hynorm,rho,flag)
 
        dzynorm = evalDist(n,xp,x)
@@ -341,90 +350,6 @@ contains
 912 FORMAT(3X,'WARNING! Solver return FLAG ',I3,'!',/)
 
   end subroutine dfoirfalg
-
-  !----------------------------------------------------------!
-  ! FUNCTION FLATFILTER                                      !
-  !                                                          !
-  ! This function tests if the point for which the values fx !
-  ! (objective function value) and hxnorm (norm of the       !
-  ! infeasibilities) have been calculated belongs to the     !
-  ! flat filter.                                             !
-  !                                                          !
-  ! Returns .true. if the point belongs to the filter or     !
-  ! .false. otherwise.                                       !
-  !                                                          !
-  !----------------------------------------------------------!
-
-  function slantingFilter(fx,hxnorm,nf,ffilter,hfilter,alpha_)
-
-    ! SCALAR ARGUMENTS
-    integer :: nf
-    real(8) :: alpha_,fx,hxnorm
-
-    ! ARRAY ARGUMENTS
-    real(8) :: ffilter(nf),hfilter(nf)
-
-    intent(in) :: alpha_,ffilter,fx,hfilter,hxnorm,nf
-
-    ! RETURN VALUE
-    logical :: slantingFilter
-    
-    ! LOCAL SCALARS
-    integer :: i
-
-    slantingFilter = .false.
-
-    do i = 1,nf
-       if ( hxnorm .ge. (1.0D0 - alpha_) * hfilter(i) .and. &
-            fx + alpha_ * hxnorm .ge. ffilter(i) ) then
-          slantingFilter = .true.
-          return
-       end if
-    end do
-
-  end function slantingFilter
-
-  !----------------------------------------------------------!
-  ! FUNCTION FLATFILTER                                      !
-  !                                                          !
-  ! This function tests if the point for which the values fx !
-  ! (objective function value) and hxnorm (norm of the       !
-  ! infeasibilities) have been calculated belongs to the     !
-  ! flat filter.                                             !
-  !                                                          !
-  ! Returns .true. if the point belongs to the filter or     !
-  ! .false. otherwise.                                       !
-  !                                                          !
-  !----------------------------------------------------------!
-
-  function flatFilter(fx,hxnorm,nf,ffilter,hfilter,alpha_)
-
-    ! SCALAR ARGUMENTS
-    integer :: nf
-    real(8) :: alpha_,fx,hxnorm
-
-    ! ARRAY ARGUMENTS
-    real(8) :: ffilter(nf),hfilter(nf)
-
-    intent(in) :: alpha_,ffilter,fx,hfilter,hxnorm,nf
-
-    ! RETURN VALUE
-    logical :: flatFilter
-    
-    ! LOCAL SCALARS
-    integer :: i
-
-    flatFilter = .false.
-
-    do i = 1,nf
-       if ( hxnorm .ge. (1.0D0 - alpha_) * hfilter(i) .and. &
-            fx .ge. ffilter(i) - alpha_ * hfilter(i) ) then
-          flatFilter = .true.
-          return
-       end if
-    end do
-
-  end function flatFilter
 
   !----------------------------------------------------------!
   ! FUNCTION EVALDIST                                        !

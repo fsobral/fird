@@ -4,8 +4,8 @@ module ointerface
 
   abstract interface
      subroutine optimization(n,y,l,u,me,mi,uevalf,uevalc,uevallc,uevalljac, &
-          nf,alpha,ffilter,hfilter,outiter,epsfeas,epsopt,verbose,delta,    &
-          fy,hynorm,rho,flag)
+          nf,alpha,ffilter,hfilter,filterTest,outiter,epsfeas,epsopt,       &
+          verbose,delta,fy,hynorm,rho,flag)
   
        ! TODO: Comment this interface!
 
@@ -21,6 +21,7 @@ module ointerface
        procedure(evalf)   :: uevalf
        procedure(evalc)   :: uevallc,uevalc
        procedure(evaljac) :: uevalljac
+       external :: filterTest
 
        intent(in   ) :: alpha,epsfeas,epsopt,ffilter,hfilter,l,me,mi,n, &
             nf,outiter,u,verbose
