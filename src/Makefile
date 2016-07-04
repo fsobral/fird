@@ -17,7 +17,7 @@ userinterface.mod: userinterface.o
 
 rinterface.mod: rinterface.o
 
-ointerface.mod: ointerface.o
+ointerface.mod: filters.mod ointerface.o 
 
 filters.mod: filters.o
 
