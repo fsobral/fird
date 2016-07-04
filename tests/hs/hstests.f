@@ -101,7 +101,7 @@ C     CALLS THE ALGORITHM
 
       open(75,FILE='runhs.out')
       write(75,0020) NTP,N,NILI + NINL,NELI + NENL,1.0D20,1.0D20,
-     +     1.0D20,-1
+     +     1.0D20,-1,-1
       close(75)
 
 C     Some HS problems do not have derivatives of the constraints
@@ -132,16 +132,18 @@ C     Some HS problems do not have derivatives of the constraints
       end if
 
       open(75,FILE='runhs.out')
-      write(75,0020) NTP,N,NILI + NINL,NELI + NENL,FEX,F,FEAS,FCNT
+      write(75,0020) NTP,N,NILI + NINL,NELI + NENL,FEX,F,FEAS,FCNT,
+     +     FLAG
       write(*,0021) NTP,N,NILI + NINL,NELI + NENL,FEX,F,FEAS,FCNT,
-     +     optm
+     +     FLAG,optm
       close(75)
 
 !     NON-EXECUTABLE STATEMENTS
 
- 0020 FORMAT(I4,1X,I4,1X,I4,1X,I4,5X,E15.8,1X,E15.8,1X,E15.8,1X,I15)
+ 0020 FORMAT(I4,1X,I4,1X,I4,1X,I4,5X,E15.8,1X,E15.8,1X,E15.8,1X,I15,
+     +     1X,I4)
  0021 FORMAT(I4,1X,I4,1X,I4,1X,I4,5X,E15.8,1X,E15.8,1X,E15.8,1X,I15,
-     +     1X,A1)
+     +     1X,I4,1X,A1)
 
       END PROGRAM PRINCIPAL
 

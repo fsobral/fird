@@ -20,11 +20,11 @@ module dfoirfilter
   ! Initial value of RHO
   real(8), parameter :: RHOINI = 1.0D0
 
-  ! ARRAYS
+  ! GLOBAL ARRAYS
   integer, allocatable :: linpos(:),linvar(:)
   real(8), allocatable :: linrhs(:),linval(:)
 
-  ! SCALARS
+  ! GLOBAL SCALARS
   integer :: ncev,nfev,njev
 
   ! EXTERNAL SUBROUTINES
@@ -55,6 +55,8 @@ contains
     ! 2  - Maximum number of obj. function evaluations was reached
     ! 3x - Failure in the restoration phase
     ! 4x - Failure in the optimization phase
+    ! 5  - Memory error
+    ! 6  - User-defined function error
 
     use rinterface, only: restoration
     use ointerface, only: optimization
@@ -77,15 +79,18 @@ contains
 
     ! LOCAL ARRAYS
     real(8) :: ffilter(MAXOUTITER),hfilter(MAXOUTITER),rl(n),ru(n),xp(n)
+    character(len=47) :: outmsg
 
     ! LOCAL SCALARS
     logical :: isforb,isalph,isbeta
-    integer :: i,j,k,outiter,jcnnz,m,nf
+    integer :: i,j,k,outiter,jcnnz,m,nf,tflag
     real(8) :: c,currfeas,delta,dzynorm,dxznorm,fx,fy,fz,hxnorm,&
          hznorm,hynorm,rho
 
     ! LOCAL POINTERS
     procedure(absfilter), pointer :: filterTest => null()
+
+    if ( verbose ) write(*,800)
 
     !----------------!
     ! Initialization !
@@ -107,14 +112,17 @@ contains
 
     delta = rho
 
-    ! TODO: check for errors when allocating
-    allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
+    outmsg = ''
 
-    hxnorm = evalinfeas(n,x,l,u,me,mi,flag)
+    ! Allocate working arrays
 
-    currfeas = hxnorm
+    if ( safeallocate(n,m) .ne. 0 ) then
 
-    dzynorm = 1.0D+20
+       flag = 5
+
+       goto 010
+
+    end if
 
     ! Select filter
 
@@ -128,11 +136,37 @@ contains
 
     end if
 
-    call aevalf(n,x,fx,flag)
-
-    ! Filter initialization
+    ! Filter size initialization
 
     nf = 1
+
+    ! Evaluate infeasibility and objective function
+
+    hxnorm = evalinfeas(n,x,l,u,me,mi,flag)
+
+    if ( flag .ne. 0 ) then
+
+       flag = 6
+
+       goto 010
+
+    end if
+
+    currfeas = hxnorm
+
+    dzynorm = 1.0D+20
+
+    call aevalf(n,x,fx,flag)
+
+    if ( flag .ne. 0 ) then
+
+       flag = 6
+
+       goto 010
+
+    end if
+
+    ! Main loop
 
     do while ( .true. )
 
@@ -176,21 +210,30 @@ contains
 !!$             ru(i) = min(u(i),x(i) + BETA * hxnorm)
 !!$          end do
 
-          call restore(n,x,l,u,me,mi,aevalc,aevaljac, &
-               currfeas,verbose,hznorm,flag)
+          call restore(n,x,l,u,me,mi,aevalc,aevaljac,currfeas, &
+               verbose,hznorm,tflag)
 
-          if ( flag .ne. 0 ) then
-             Write(*,*) 'Problems in the restoration solver.'
-             exit
-          end if
+          if ( tflag .ne. 0 ) write(*,912) tflag
           
           if ( hznorm .gt. currfeas ) then
-             write(*,*) 'Unable to reach desired feasibility.'
-             flag = 4
+
+             flag = 3
+
+             if ( verbose ) write(*,913)
+
              exit
+
           end if
 
           call aevalf(n,x,fz,flag)
+
+          if ( flag .ne. 0 ) then
+
+             flag = 6
+
+             exit
+
+          end if
 
           ! Test alpha and filter conditions. In case of failure,
           ! decrease feasibility tolerance. The beta test is only for
@@ -236,10 +279,20 @@ contains
           ! Just for inequalities
           if ( i .gt. me ) then
              call aevalc(n,x,i,c,flag)
+             if ( flag .ne. 0 ) then
+                flag = 6
+                exit
+             end if
              linrhs(i) = max(0.0D0, c) - c
           end if
 
           call aevaljac(n,x,i,linvar(k),linval(k),jcnnz,flag)
+
+          if ( flag .ne. 0 ) then
+             flag = 6
+             exit
+          end if
+
           linpos(i) = k
 
           do j = k,k + jcnnz - 1
@@ -248,6 +301,8 @@ contains
 
           k = k + jcnnz
        end do
+
+       if ( flag .ne. 0 ) exit
 
        linpos(m + 1) = k
 
@@ -267,11 +322,19 @@ contains
 
        call qpsolver(n,x,l,u,me,mi,aevalf,aevalc,levalc,levaljac, &
             nf,ALPHA,ffilter,hfilter,filterTest,outiter,currfeas, &
-            epsopt,verbose,delta,fy,hynorm,rho,flag)
+            epsopt,verbose,delta,fy,hynorm,rho,tflag)
 
        dzynorm = evalDist(n,xp,x)
 
-       if ( flag .ne. 0 ) write(*,912) flag
+       if ( tflag .ne. 0 ) then 
+
+          write(*,912) tflag
+          
+          flag = 4
+
+          exit
+
+       end if
 
        if ( verbose ) write(*,910) fy,hynorm,delta,rho,dzynorm, &
             nfev,min(n,MAXNEL),(x(i), i=1,min(n,MAXNEL))
@@ -322,8 +385,17 @@ contains
 
     deallocate(linrhs,linpos,linvar,linval)
 
-    if ( verbose ) write(*,911) fx,hxnorm,nfev,min(n,MAXNEL), &
-         (x(i),i=1,min(n,MAXNEL))
+010 if ( flag .eq. 0 ) outmsg = '(SOLUTION FOUND)'
+    if ( flag .eq. 1 ) outmsg = '(MAX OUTER ITER. REACHED)'
+    if ( flag .eq. 2 ) outmsg = '(MAX F EVAL REACHED)'
+    if ( flag .eq. 3 ) outmsg = '(FAILURE IN RESTORATION PHASE)'
+    if ( flag .eq. 4 ) outmsg = '(FAILURE IN OPTIMALITY PHASE)'
+    if ( flag .eq. 5 ) outmsg = '(MEMORY PROBLEMS)'
+    if ( flag .eq. 6 ) outmsg = '(USER FUNCTION PROBLEM)'
+
+    if ( verbose ) &
+         write(*,911) outmsg,flag,fx, hxnorm,nfev, &
+         min(n,MAXNEL),(x(i),i=1,min(n,MAXNEL))
 
     f = fy
 
@@ -332,6 +404,12 @@ contains
     fcnt = nfev
 
     ! NON-EXECUTABLE STATEMENTS
+
+800 FORMAT(/,67('*'),/,67('*'),/,/,'Welcome to the FKSS Algorithm!',/,       &
+    'This algorithm is based on the work:',/,                                &
+    '"Global convergence of a derivative-free inexact restoration filter',/, &
+    'algorithm for nonlinear programming", P.S. Ferreira, E.W. Karas,',/,    &
+    'M. Sachine and F.N.C. Sobral, Submitted, 2016.',/,/,67('*'),/,67('*'),/)
     
 900 FORMAT(/,70('-'),/,'Outer iteration',I55,/,70('-'),/,/,'F(X) = ', &
            40X,1PD23.8,/,'H(X) = ',40X,1PD23.8)
@@ -352,13 +430,51 @@ contains
            3X,'||D|| =',44X,D16.8,/,3X,'Number of f evaluat. =',1X, &
            I44,/,3X,'Optimized point (first',1X, &
            I5,' elements):',/,(3X,16X,3(1X,1PD16.8)))
-911 FORMAT(/,70('-'),/,'Final Iteration',/,70('-'),/,'F(X) =',48X, &
-           1PD16.8,/,'H(X) =',48X,D16.8,/,   &
-           'Function Evaluations =',28X,I20,/,'Solution (first',1X, &
+
+911 FORMAT(/,70('-'),/,'Final Iteration',1X,A47,1X,'Flag',1X, &
+           I1,/,70('-'),/,'F(X) =',48X,1PD16.8,/,'H(X) =',48X,D16.8,/,&
+           'Function Evaluations =',28X,I20,/,'Solution (first',1X,   &
            I5,' elements):',/,(2X,4(1X,1PD16.8)))
-912 FORMAT(3X,'WARNING! Solver return FLAG ',I3,'!',/)
+
+912 FORMAT(3X,/,'WARNING! Solver returned FLAG ',I4,'!',/)
+913 FORMAT(3x,'Unable to reach desired feasibility.')
 
   end subroutine dfoirfalg
+
+  !----------------------------------------------------------!
+  ! FUNCTION SAFEALLOCATE                                    !
+  !                                                          !
+  ! This function verifies if the global arrays have already !
+  ! been allocated before attempting to allocate them.       !
+  !                                                          !
+  !----------------------------------------------------------!
+
+  function safeallocate(n,m)
+
+    ! SCALAR ARGUMENTS
+    integer :: m,n
+
+    ! RETURN TYPE
+    integer :: safeallocate
+
+    ! LOCAL SCALARS
+    integer :: serr
+
+    intent(in ) :: m,n
+
+    if ( allocated(linrhs) ) deallocate(linrhs)
+    if ( allocated(linpos) ) deallocate(linpos)
+    if ( allocated(linvar) ) deallocate(linvar)
+    if ( allocated(linval) ) deallocate(linval)
+
+    allocate(linrhs(m), linpos(m  + 1), linvar(m * n), &
+         linval(m * n), STAT = serr)
+
+    safeallocate = 0
+
+    if ( serr .gt. 0 ) safeallocate = 1
+
+  end function safeallocate
 
   !----------------------------------------------------------!
   ! FUNCTION EVALDIST                                        !
