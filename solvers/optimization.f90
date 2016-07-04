@@ -16,6 +16,7 @@ subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
 
   use trdf_solver
   use userinterface
+  use filters      , only: absfilter
 
   implicit none
 
@@ -28,10 +29,10 @@ subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
   real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
 
   ! EXTERNAL SUBROUTINES
-  procedure(evalf)   :: evalf_
-  procedure(evalc)   :: evallc_,evalc_
-  procedure(evaljac) :: evalljac_
-  logical,external   :: filterTest
+  procedure(evalf)     :: evalf_
+  procedure(evalc)     :: evallc_,evalc_
+  procedure(evaljac)   :: evalljac_
+  procedure(absfilter) :: filterTest
 
   intent(in   ) :: alpha,epsfeas,epsopt,ffilter,hfilter,l,me,mi,n, &
        nf,outiter,u,verbose

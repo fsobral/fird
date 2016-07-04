@@ -1,6 +1,7 @@
 module ointerface
 
   use userinterface
+  use filters      , only: absfilter
 
   abstract interface
      subroutine optimization(n,y,l,u,me,mi,uevalf,uevalc,uevallc,uevalljac, &
@@ -18,10 +19,10 @@ module ointerface
        real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
        
        ! EXTERNAL SUBROUTINES
-       procedure(evalf)   :: uevalf
-       procedure(evalc)   :: uevallc,uevalc
-       procedure(evaljac) :: uevalljac
-       external :: filterTest
+       procedure(evalf)     :: uevalf
+       procedure(evalc)     :: uevallc,uevalc
+       procedure(evaljac)   :: uevalljac
+       procedure(absfilter) :: filterTest
 
        intent(in   ) :: alpha,epsfeas,epsopt,ffilter,hfilter,l,me,mi,n, &
             nf,outiter,u,verbose

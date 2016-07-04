@@ -22,6 +22,7 @@ contains
        delta,fy,hynorm,rho,flag)
 
     use trdf
+    use filters, only: absfilter
 
     implicit none
 
@@ -34,8 +35,8 @@ contains
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
 
     ! EXTERNAL SUBROUTINES
-    external :: uevalf_,uevallc_,uevalljac_,uevalc_
-    logical, external :: filterTest
+    external             :: uevalf_,uevallc_,uevalljac_,uevalc_
+    procedure(absfilter) :: filterTest
 
     ! LOCAL SCALARS
     integer :: i,m,maxfcnt,npt,fcnt

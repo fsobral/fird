@@ -108,7 +108,6 @@ contains
     delta = rho
 
     ! TODO: check for errors when allocating
-
     allocate(linrhs(m), linpos(m  + 1), linvar(m * n), linval(m * n))
 
     hxnorm = evalinfeas(n,x,l,u,me,mi,flag)
@@ -116,6 +115,8 @@ contains
     currfeas = hxnorm
 
     dzynorm = 1.0D+20
+
+    ! Select filter
 
     if ( ftype .eq. 2 ) then
 
@@ -126,8 +127,6 @@ contains
        filterTest => flatFilter
 
     end if
-
-
 
     call aevalf(n,x,fx,flag)
 
