@@ -20,7 +20,6 @@ FCC =
 
 # Solver configuration parameters
 
-# SOLVERLIB = /opt/tango/algencan-3.0.0/lib
 SOLVERLIB = /opt/tango/algencan-3.0.0/lib
 RESTORATION_INTERFACE = restoration
 OPTIMIZATION_INTERFACE = optimization
