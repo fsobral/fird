@@ -39,7 +39,7 @@ module dfoirfilter
 contains
 
   subroutine dfoirfalg(n,x,l,u,me,mi,evalf_,evalc_,evaljac_, &
-       verbose,epsfeas,epsopt,f,feas,fcnt,flag)
+       verbose,ftype,epsfeas,epsopt,f,feas,fcnt,flag)
 
     ! This subroutine uses the Derivative-free Inexact Restoration
     ! Filter algorithm described in
@@ -63,7 +63,7 @@ contains
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: fcnt,flag,me,mi,n
+    integer :: fcnt,flag,ftype,me,mi,n
     logical :: verbose
     real(8) :: epsfeas,epsopt,f,feas
 
@@ -85,7 +85,7 @@ contains
          hznorm,hynorm,rho
 
     ! LOCAL POINTERS
-    procedure(absfilter), pointer :: filterTest
+    procedure(absfilter), pointer :: filterTest => null()
 
     !----------------!
     ! Initialization !
@@ -100,8 +100,6 @@ contains
     uevalf   => evalf_
     uevalc   => evalc_
     uevaljac => evaljac_
-
-    filterTest => flatFilter
 
     m = me + mi
 
@@ -118,6 +116,18 @@ contains
     currfeas = hxnorm
 
     dzynorm = 1.0D+20
+
+    if ( ftype .eq. 2 ) then
+
+       filterTest => slantingFilter
+
+    else
+
+       filterTest => flatFilter
+
+    end if
+
+
 
     call aevalf(n,x,fx,flag)
 

@@ -52,7 +52,7 @@ C     LOCAL SCALARS
 
       character OPTM
       logical VERBOSE
-      integer FCNT
+      integer FCNT,FTYPE
       double precision C,F,FEAS,EPSFEAS,EPSOPT
 
 C     WRITE(*,*) 'Number of the problem: '
@@ -119,8 +119,10 @@ C     Some HS problems do not have derivatives of the constraints
       
       EPSOPT = 1.0D-04
 
-      call fkss(n,x_,l,u,me,mi,calobjf,calcon,caljac,verbose,epsfeas,
-     +     epsopt,f,feas,fcnt,flag)
+      FTYPE = 1
+
+      call fkss(n,x_,l,u,me,mi,calobjf,calcon,caljac,verbose,ftype,
+     +     epsfeas,epsopt,f,feas,fcnt,flag)
 
       reldiff = (f - FEX) / max(1.0D0,abs(f),abs(FEX))
 
