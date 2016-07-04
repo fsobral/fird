@@ -56,7 +56,9 @@ contains
     real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
 
     ! EXTERNAL SUBROUTINES
-    external             :: uevalf_,uevallc_,uevalljac_,uevalc_
+    procedure(evalf  )   :: uevalf_
+    procedure(evalc  )   :: uevallc_,uevalc_
+    procedure(evaljac)   :: uevalljac_
     procedure(absfilter) :: filterTest
 
     ! LOCAL SCALARS
@@ -101,59 +103,12 @@ contains
 
     !delta = max(DELMIN, rbeg, delta)
 
-    call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,UEVALF,UEVALLC, &
-         TRDF_EVALJAC,TRDF_EVALHC,UEVALC,MAXFCNT,RBEG,REND,XEPS,VERBOSE, &
-         NF,ALPHA,FFILTER,HFILTER,FILTERTEST,OUTITER,DELTA,EPSFEAS,FY, &
-         HYNORM,FCNT,RHO,FLAG)
+    call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,MAXFCNT,RBEG, &
+         REND,XEPS,VERBOSE,NF,ALPHA,FFILTER,HFILTER,FILTERTEST,   &
+         OUTITER,DELTA,EPSFEAS,FY,HYNORM,FCNT,RHO,FLAG)
 
   end subroutine trdfsolver
 
-  ! ******************************************************************
-  ! ******************************************************************
-
-  subroutine trdf_evaljac(n,x,ind,jcvar,jcval,jcnnz,lim,lmem,flag)
-
-    implicit none
-
-    ! SCALAR ARGUMENTS
-    logical :: lmem
-    integer :: flag,ind,jcnnz,lim,n
-
-    ! ARRAY ARGUMENTS
-    integer :: jcvar(lim)
-    real(8) :: x(n),jcval(lim)
-
-    flag = -1
-
-    lmem = .false.
-
-    call uevalljac(n,x,ind,jcvar,jcval,jcnnz,flag)
-
-  end subroutine trdf_evaljac
-
-  ! ******************************************************************
-  ! ******************************************************************
-
-  subroutine trdf_evalhc(n,x,ind,hcrow,hccol,hcval,hcnnz,lim,lmem,flag)
-
-    implicit none
-
-    ! SCALAR ARGUMENTS
-    logical :: lmem
-    integer :: flag,hcnnz,ind,lim,n
-
-    ! ARRAY ARGUMENTS
-    integer :: hccol(lim),hcrow(lim)
-    real(8) :: hcval(lim),x(n)
-
-    flag = 0
-
-    lmem = .false.
-
-    hcnnz = 0
-
-  end subroutine trdf_evalhc
-
 
   ! ******************************************************************
   ! ******************************************************************
@@ -173,9 +128,9 @@ contains
 
 
 
-  SUBROUTINE TRDFSUB(N,NPT,X,XL,XU,M,EQUATN,LINEAR,CCODED,EVALF_,EVALLC_, &
-       EVALLJAC_,EVALHC_,EVALC_,MAXFCNT,RBEG,REND,XEPS,OUTPUT,NF,  &
-       ALPHA,FFILTER,HFILTER,FILTERTEST,OUTITER,DELTA,EPSFEAS,F,FEAS,FCNT,RHO,FLAG)
+  SUBROUTINE TRDFSUB(N,NPT,X,XL,XU,M,EQUATN,LINEAR,CCODED,MAXFCNT, &
+       RBEG,REND,XEPS,OUTPUT,NF,ALPHA,FFILTER,HFILTER,FILTERTEST,  &
+       OUTITER,DELTA,EPSFEAS,F,FEAS,FCNT,RHO,FLAG)
 
     ! This subroutine is the implementation of the Derivative-free
     ! Trust-region algorithm for constrained optimization described in
@@ -243,6 +198,8 @@ contains
     !
     ! FCNT - number of function evaluations
 
+    use filters, only: absfilter
+
     IMPLICIT NONE
 
     ! SCALAR ARGUMENTS
@@ -255,8 +212,7 @@ contains
     logical :: ccoded(2),equatn(m),linear(m)
 
     ! EXTERNAL SUBROUTINES
-    external         :: evalf_,evallc_,evalljac_,evalhc_,evalc_
-    logical,external :: filterTest
+    procedure(absfilter) :: filterTest
 
     intent(in   ) :: m,maxfcnt,n,npt,rbeg,rend,xeps,xl,xu,ccoded, &
                     equatn,linear,alpha,nf,ffilter,hfilter,epsfeas, &
@@ -283,12 +239,6 @@ contains
     flag = 0
 
     ! Set the user-defined functions
-
-    !evalf   => evalf_
-    !evallc   => evallc_
-    !evalljac => evalljac_
-    !evalhc  => evalhc_
-    !evalc   => evalc_
 
     FZ      = F
     F       = 1.0D+300
@@ -1379,11 +1329,13 @@ contains
 
     flag = -1
 
+    lmem = .false.
+
     DO I=1, N
        XA(I) = X(I) + XBASE_A(I)
     END DO
 
-    call trdf_evaljac(n,XA,ind,jcvar,jcval,jcnnz,lim,lmem,flag)
+    call uevalljac(n,XA,ind,jcvar,jcval,jcnnz,flag)
 
   end subroutine mevaljac
 
@@ -1408,13 +1360,11 @@ contains
     ! LOCAL SCALARS
     integer :: i
 
-    flag = -1
+    flag = 0
 
-    DO i = 1,n
-       XA(I) = X(I) + XBASE_A(I)
-    END DO
+    lmem = .false.
 
-    call trdf_evalhc(n,XA,ind,hcrow,hccol,hcval,hcnnz,lim,lmem,flag)
+    hcnnz = 0
 
   end subroutine mevalhc
   
