@@ -1,5 +1,10 @@
 module filters
 
+  ! This module defines the prototype of a filter test used by the
+  ! Filter DFO IR Algorithm.
+  !
+  ! It also defines two filters: flat filter and slanting filter.
+
   abstract interface
      function absfilter(fx,hxnorm,alpha_,nf,ffilter,hfilter)
        ! SCALAR ARGUMENTS
@@ -19,7 +24,7 @@ module filters
 contains
 
   !----------------------------------------------------------!
-  ! FUNCTION FLATFILTER                                      !
+  ! FUNCTION SLANTINGFILTER                                  !
   !                                                          !
   ! This function tests if the point for which the values fx !
   ! (objective function value) and hxnorm (norm of the       !
@@ -27,7 +32,8 @@ contains
   ! flat filter.                                             !
   !                                                          !
   ! Returns .true. if the point belongs to the filter or     !
-  ! .false. otherwise.                                       !
+  ! .false. otherwise. The considered filter is the          !
+  ! 'slanting filter' defined by Chin and Fletcher (2003)    !
   !                                                          !
   !----------------------------------------------------------!
   
@@ -47,14 +53,6 @@ contains
 
     ! LOCAL SCALARS
     integer :: i
-
-    Write(*,*)
-    Write(*,*)
-    Write(*,*)
-    write(*,*) '----------> Slanting'
-    Write(*,*)
-    Write(*,*)
-    Write(*,*)
 
     slantingFilter = .false.
 
@@ -77,7 +75,8 @@ contains
   ! flat filter.                                             !
   !                                                          !
   ! Returns .true. if the point belongs to the filter or     !
-  ! .false. otherwise.                                       !
+  ! .false. otherwise. The considered filter is the 'flat    !
+  ! filter' described in Fletcher and Leyffer (2002).        !
   !                                                          !
   !----------------------------------------------------------!
 
@@ -97,14 +96,6 @@ contains
 
     ! LOCAL SCALARS
     integer :: i
-
-    Write(*,*)
-    Write(*,*)
-    Write(*,*)
-    write(*,*) '----------> Flat'
-    Write(*,*)
-    Write(*,*)
-    Write(*,*)
 
     flatFilter = .false.
 
