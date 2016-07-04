@@ -11,7 +11,7 @@ module trdf_solver
   integer, parameter :: MMAX = 1000
   integer, parameter :: JCNNZMAX = NMAX * MMAX
   integer, parameter :: HCNNZMAX = NMAX ** 2 * (1 + MMAX)
-  integer, parameter :: MAXXEL = 3
+  integer, parameter :: MAXXEL = 30
   integer, parameter :: INN = 1000
 
   ! COMMON SCALARS
@@ -38,7 +38,7 @@ module trdf_solver
 contains
 
   ! Uses the adapted TRDF algorithm for solving the optimality phase
-
+  
   subroutine trdfsolver(n,y,l,u,me,mi,uevalf_,uevalc_,uevallc_,uevalljac_, &
        nf,alpha,ffilter,hfilter,filterTest,outiter,epsfeas,epsopt,verbose, &
        delta,fy,hynorm,rho,flag)
@@ -109,94 +109,32 @@ contains
 
   end subroutine trdfsolver
 
-
   ! ******************************************************************
   ! ******************************************************************
-
-  ! ******************************************************************
-  ! ******************************************************************
-
-  ! ******************************************************************
-  ! ******************************************************************
-
-  ! ******************************************************************
-  ! ******************************************************************
-
-  ! ******************************************************************
-  ! ******************************************************************
-
-
-
 
   SUBROUTINE TRDFSUB(N,NPT,X,XL,XU,M,EQUATN,LINEAR,CCODED,MAXFCNT, &
        RBEG,REND,XEPS,OUTPUT,NF,ALPHA,FFILTER,HFILTER,FILTERTEST,  &
        OUTITER,DELTA,EPSFEAS,F,FEAS,FCNT,RHO,FLAG)
 
-    ! This subroutine is the implementation of the Derivative-free
-    ! Trust-region algorithm for constrained optimization described in
+    ! This subroutine is strongly based on the implementation of the
+    ! Derivative-free Trust-region algorithm for constrained
+    ! optimization described in
     !
     !     P. D. Conejo, E. W. Karas, L. G. Pedroso, "A trust-region
     !     derivative-free algorithm for constrained optimization".
-    !     Optimization Methods & Software, to appear, 2015.
+    !     Optimization Methods & Software, v. 30 (6), p. 1126-1145,
+    !     2015.
     !
     ! For more information on configurations, recommended values of
-    ! the parameters and examples, please read the documentation
-    ! provided with the method.
+    ! the parameters and examples for the original method, please read
+    ! the documentation provided with the method.
     !
-    !     The INPUT parameters are
-    ! N - dimension of the problem
-    !
-    ! NPT - number of points used in the quadratic interpolation
-    !
-    ! X(N) - inital point
-    !
-    ! XL(N) - lower bounds on the variables
-    !
-    ! XU(N) - upper bounds on the variables
-    !
-    ! M - number of constraints
-    !
-    ! EQUATN(M) - a logical vector such that EQUATN(i) = .true. if and
-    !             only if constraint 'i' is an equality constraint
-    !
-    ! LINEAR(M) - a logical vector such that LINEAR(i) = .true. if and
-    !             only if constraint 'i' is a linear constraint
-    !
-    ! CCODED(2) - a logical vector indicating whether or not the
-    !             Jacobian (CCODED(1)) and the Hessian (CCODED(2)) of
-    !             the constraints are provided by the user
-    !
-    ! EVALF_ - the user-defined objective function
-    !
-    ! EVALC_ - the user-defined constraints
-    !
-    ! EVALJAC_ - the user-defined Jacobian of the constraints
-    !
-    ! EVALHC_ - the user defined Hessian of the constraints
-    !
-    ! MAXFCNT - maximum number of function evaluations
-    !
-    ! RBEG - initial value for the trust region radius and interpolation
-    !
-    ! REND - smallest trust-region radius for declaring convergence of
-    !        the method
-    !
-    ! XEPS - feasibility/optimality tolerance for solving the subproblems
-    !
-    ! OUTPUT - a logical variable indicating if the method has or has not
-    !          to display information
-    !
-    ! The OUTPUT parameters are
-    !
-    ! X(N) - the final point
-    !
-    ! F - On entry, F contains the objective function value at the
-    !     starting point. On exit, is objective function value at the
-    !     final point
-    !
-    ! FEAS - sup-norm of the infeasibility at the final point
-    !
-    ! FCNT - number of function evaluations
+    ! The modifications performed in the algorithm were based in the
+    ! "Optimality Phase" described in
+    ! 
+    ! "Global convergence of a derivative-free inexact restoration
+    ! filter algorithm for nonlinear programming", P.S. Ferreira,
+    ! E.W. Karas, M. Sachine and F.N.C. Sobral, Submitted, 2016.
 
     use filters, only: absfilter
 
@@ -215,8 +153,8 @@ contains
     procedure(absfilter) :: filterTest
 
     intent(in   ) :: m,maxfcnt,n,npt,rbeg,rend,xeps,xl,xu,ccoded, &
-                    equatn,linear,alpha,nf,ffilter,hfilter,epsfeas, &
-                    outiter
+         equatn,linear,alpha,nf,ffilter,hfilter,epsfeas, &
+         outiter
     intent(out  ) :: feas,fcnt,flag,rho
     intent(inout) :: delta,f,x
 
@@ -229,8 +167,6 @@ contains
     real(8) :: alfa,beta,c,cnorm,distsq,dsq,gamma, &
          mindelta,rhobeg,rhoend,sigm,sum,tau,tempofinal, &
          tempoinicial,fz,distz,qx,qz
-
-    IF ( OUTPUT ) WRITE(*,3000)
 
     ! -------------- !
     ! Initialization !
@@ -250,8 +186,6 @@ contains
     DELTA   = MAX(DELTA, RHO) ! Correcting delta if necessary
     GAMMA   = 0.1D0
 
-    IF (OUTPUT) WRITE(*,1001)
-
     DO I=1,N
        Z(I) = X(I)
        XNOVO(I) = X(I)
@@ -260,29 +194,9 @@ contains
     if ( outiter .gt. 1 ) then
 
        ! Repurposing the interpolation points from the previous
-       ! iterations, but first verify if the set is 'well poised'
-       ! for the new point.
+       ! iterations
 
-       KN=0
-       DO   K=1,NPT
-          SUM=0D0
-          DO   J=1,N
-             SUM=SUM+(Y_(K,J)-Z(J))**2
-          END DO
-          IF ( SUM .GT. 10.0D0 * RHO ** 2.0D0 ) THEN
-             KN=K
-             exit
-          END IF
-       END DO
-
-       if ( KN .eq. 0 ) then 
-
-!          CALL CALFUN(N,X,FZ,FLAG)
-!          IF ( FLAG .NE. 0 ) GOTO 31
-
-          GOTO 11
-
-       end if
+       GOTO 11
 
     else
 
@@ -314,13 +228,13 @@ contains
     CALL  PRIMEIROMODELO1 (N,X,Q_,H_,NPT,RHO,Y_,FF_,FLAG) 
 
     IF ( OUTPUT ) WRITE(*,1002) RHO,DELTA,FF_(1),IC,MIN(N,MAXXEL), &
-                  (X(I), I=1,MIN(N,MAXXEL))
+         (X(I), I=1,MIN(N,MAXXEL))
     IF ( FLAG .NE. 0 ) GOTO 31
 
     FZ = FF_(1)         
 
-11  CALL   SUBPROBLEMA(N,NPT,Q_,DELTA,D,X,XL,XU,DSQ, &
-                       M,EQUATN,LINEAR,CCODED,XEPS,FLAG) 
+11  CALL SUBPROBLEMA(N,NPT,Q_,DELTA,D,X,XL,XU,DSQ,M,EQUATN,LINEAR, &
+         CCODED,XEPS,FLAG)
 
     ! Actually, we should sum Q(1) to have the correct value
     ! of the model at the points. But, in order to calculate
@@ -328,7 +242,7 @@ contains
     ! canceled.
 
     call mevalf(N,d,QX,flag)
- 
+
     do i = 1,n
        d(i) = z(i) - xbase_a(i)
     end do
@@ -338,13 +252,14 @@ contains
     IF ( OUTPUT ) WRITE(*,1003) RHO,DELTA,QX + Q_(1),FZ,IC
 
     IF ( FLAG .NE. 0 ) THEN
-       write(*,*) 'Error in the solver...'
+
        IF ( RHO .LE. RHOEND ) THEN
           GOTO 31
        ELSE
           RHO = GAMMA * RHO
           GOTO 4
        END IF
+
     END IF
 
     DISTZ = 0.0D0
@@ -520,58 +435,49 @@ contains
 
     FCNT = IC
 
-    IF ( OUTPUT ) THEN
-       call cpu_time(tempofinal)
-       write(*,2000) F,FEAS,RHO,DELTA,IC,(tempofinal - tempoinicial), &
-                     MIN(N,MAXXEL),(X(I), I=1,MIN(N,MAXXEL))
-    END IF
+!!$    IF ( OUTPUT ) THEN
+!!$       call cpu_time(tempofinal)
+!!$       write(*,2000) F,FEAS,RHO,DELTA,IC,(tempofinal - tempoinicial), &
+!!$                     MIN(N,MAXXEL),(X(I), I=1,MIN(N,MAXXEL))
+!!$    END IF
 
     ! FORMATS
 
 1000 FORMAT(/,'PHASE 0',/,7('-'),/,/,'FEASIBILITY =',36X,D23.8,/, &
-              'NEW POINT',/,3(1X,D23.8))
+         'NEW POINT',/,3(1X,D23.8))
 1001 FORMAT(/,'PHASE 1',/,7('-'),/)
-1002 FORMAT(/,'(RE)BUILDING MODEL from scratch.',/, &
-            5X,'RHO =',50X,D12.5,/,                 &
-            5X,'Delta =',48X,D12.5,/,               &
-            5X,'Objective function =',24X,D23.8,/,  &
-            5X,'Function evaluations =',35X,I10,/,  &
-            5X,'Current model center (first ',I3,' elements)',/,6X, &
-            3(1X,D21.8))
-1003 FORMAT(/,'SOLVED TR SUBPROBLEM.',/,           &
-            5X,'RHO =',50X,D12.5,/,                &
-            5X,'Delta =',48X,D12.5,/,              &
-            5X,'Model value =',31X,D23.8,/,        &
-            5X,'Objective function (at Z) =',17X,D23.8,/, &
-            5X,'Function evaluations =',35X,I10)
+1002 FORMAT(3X,'(RE)BUILDING MODEL from scratch.',/, &
+         3X,5X,'RHO =',45X,D12.5,/,               &
+         3X,5X,'Delta =',43X,D12.5,/,             &
+         3X,5X,'Objective function =',19X,D23.8,/,&
+         3X,5X,'Function evaluations =',30X,I10,/,&
+         3X,5X,'Current model center (first ',I3, &
+         ' elements)',/,3X,6X,3(1X,D21.8))
+1003 FORMAT(/,3X,'SOLVED TR SUBPROBLEM.',/,                 &
+         3X,5X,'RHO =',45X,D12.5,/,                      &
+         3X,5X,'Delta =',43X,D12.5,/,                    &
+         3X,5X,'Model value =',26X,D23.8,/,              &
+         3X,5X,'Objective function (at Z) =',12X,D23.8,/,&
+         3X,5X,'Function evaluations =',30X,I10)
 1004 FORMAT(5X,'Objective function =',24X,D23.8)
 1005 FORMAT(/,'REMOVING sampling point',1X,I4,'.')
 1006 FORMAT(5X,'Objective function (at trial point) =',&
-            7X,D23.8)
+         7X,D23.8)
 
 
-1020 FORMAT(/,'Solution was found!',/)
-1021 FORMAT(/,'Flag -1: Error while evaluating functions.',/)
-1022 FORMAT(/,'Flag 2: Error in the internal solver.',/)
-1023 FORMAT(/,'Flag 3: Reached the maximum of',1X,I10,1X, &
-          'function evaluations.',/)
-1024 FORMAT(/,'Flag 4: Rho smaller than tolerance.',/)
-
-2000 FORMAT(/,'Final Iteration',/,15('-'),2/,          &
-            'Objective function =',29X,D23.8,/,        &
-            'Feasibility =',36X,D23.8,/,               &
-            'RHO =',55X,D12.5,/,                       &
-            'Delta =',53X,D12.5,/,                     &
-            'Function evaluations =',40X,I10,/,        &
-            'CPU time =',30X,1PD23.8,1X,'seconds.',/,  &
-            'Solution (first ',I3,' elements)',/,3(1X,D23.8))
+1020 FORMAT(/,3X,'Solution was found!',/)
+1021 FORMAT(/,3X,'Flag -1: Error while evaluating functions.',/)
+1022 FORMAT(/,3X,'Flag 2: Error in the internal solver.',/)
+1023 FORMAT(/,3X,'Flag 3: Reached the maximum of',1X,I10,1X, &
+         'function evaluations.',/)
+1024 FORMAT(/,3X,'Flag 4: Rho smaller than tolerance.',/)
 
 3000 FORMAT(/,'Welcome to TRDF Algorithm!',/,                   &
-          'This algorithm was based on paper',/,                &
-          'P.D. Conejo, E.W. Karas, and L.G. Pedroso',/,        &
-          '"A trust-region derivative-free algorithm for',/,    &
-          'constrained problems", Optimization Methods ',/,     &
-          'and Software, v. 30 (6), p. 1126-1145, 2015]',/)
+         'This algorithm was based on paper',/,                &
+         'P.D. Conejo, E.W. Karas, and L.G. Pedroso',/,        &
+         '"A trust-region derivative-free algorithm for',/,    &
+         'constrained problems", Optimization Methods ',/,     &
+         'and Software, v. 30 (6), p. 1126-1145, 2015]',/)
   END SUBROUTINE TRDFSUB
 
   ! ******************************************************************
@@ -696,7 +602,7 @@ contains
        ! DEFINE OTHERS INPUTS OF HESSIAN FOR OVER 2N+1.     
        DO J=2*N+2, NPT
           HQ(IP(J),IQ(J))=(1.0D0/(DELTA**2))*(FF(J)-FF(IP(J)+1) &
-                          -FF(IQ(J)+1)+ FF(1))  
+               -FF(IQ(J)+1)+ FF(1))  
           HQ(IQ(J),IP(J)) =  HQ(IP(J),IQ(J)) 
        END DO
     END IF
@@ -913,7 +819,7 @@ contains
     ! ARRAY ARGUMENTS
     real(8) :: VETOR1(*),H(NPT+N+1,NPT+N+1)
 
-!#include "tr_params.par"
+    !#include "tr_params.par"
 
     ! ALFA*(E-MM) * (E-MM)'- BETA* H * E * E'*H+TAU*H*E*(E-MM)'+ (E-MM)* E'* H
     ! MM = H*WW THAT IS STORED IN VETOR1 
@@ -1145,7 +1051,7 @@ contains
     end DO
     return
   end subroutine mmv
-  
+
   ! ******************************************************************
   ! ******************************************************************
 
