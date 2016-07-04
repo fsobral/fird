@@ -3,7 +3,7 @@ program FKSSMAIN
   implicit none
 
   ! LOCAL SCALARS
-  integer :: fcnt,flag,i,me,mi,n
+  integer :: fcnt,flag,ftype,i,me,mi,n
   logical :: verbose
   real(8) :: epsfeas,epsopt,f,feas
 
@@ -26,11 +26,13 @@ program FKSSMAIN
 
   verbose = .true.
 
-  epsfeas = 1.0D-4
+  epsfeas = 1.0D-8
   epsopt  = 1.0D-4
 
-  call fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,epsfeas,epsopt,&
-       f,feas,fcnt,flag)
+  ftype = 1 ! Flat Filter
+
+  call fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
+       epsfeas,epsopt,f,feas,fcnt,flag)
 
   deallocate(x,l,u)
 

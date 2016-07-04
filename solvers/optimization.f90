@@ -10,12 +10,13 @@
 ! functional value at restored point.
 !
 
-subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_,  &
-                    nf,alpha,ffilter,hfilter,outiter,epsfeas,epsopt,&
-                    verbose,delta,fy,hynorm,rho,flag)
+subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
+                    nf,alpha,ffilter,hfilter,filterTest,outiter,   &
+                    epsfeas,epsopt,verbose,delta,fy,hynorm,rho,flag)
 
   use trdf_solver
   use userinterface
+  use filters      , only: absfilter
 
   implicit none
 
@@ -28,9 +29,10 @@ subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_,  &
   real(8) :: ffilter(nf),hfilter(nf),l(n),u(n),y(n)
 
   ! EXTERNAL SUBROUTINES
-  procedure(evalf) :: evalf_
-  procedure(evalc) :: evallc_,evalc_
-  procedure(evaljac) :: evalljac_
+  procedure(evalf)     :: evalf_
+  procedure(evalc)     :: evallc_,evalc_
+  procedure(evaljac)   :: evalljac_
+  procedure(absfilter) :: filterTest
 
   intent(in   ) :: alpha,epsfeas,epsopt,ffilter,hfilter,l,me,mi,n, &
        nf,outiter,u,verbose
@@ -38,7 +40,7 @@ subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_,  &
   intent(inout) :: delta,fy,rho,y
 
   call solver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
-       nf,alpha,ffilter,hfilter,outiter,epsfeas, &
+       nf,alpha,ffilter,hfilter,filterTest,outiter,epsfeas,  &
        epsopt,verbose,delta,fy,hynorm,rho,flag)
 
 end subroutine qpsolver

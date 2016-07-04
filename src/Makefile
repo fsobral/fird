@@ -1,10 +1,10 @@
-base: userinterface.mod rinterface.mod ointerface.mod
+base: userinterface.mod rinterface.mod ointerface.mod filters.mod
 
 install:
 	mkdir -p $(LIB)
 	mv libdfoirfilter.a $(LIB)
 
-all: dfoirfilter.o fkss.o
+all: dfoirfilter.o fkss.o filters.o
 	ar crv libdfoirfilter.a $^
 
 fkss.o: fkss.f90
@@ -17,7 +17,9 @@ userinterface.mod: userinterface.o
 
 rinterface.mod: rinterface.o
 
-ointerface.mod: ointerface.o
+ointerface.mod: filters.mod ointerface.o 
+
+filters.mod: filters.o
 
 %.o: %.f90
 	$(FC) -c -J$(LIB) $^ -o $@
