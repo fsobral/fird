@@ -7,6 +7,7 @@ TES = $(FKSS_HOME)/tests
 SOL = $(FKSS_HOME)/solvers
 BIN = $(FKSS_HOME)/bin
 OBJ = $(FKSS_HOME)/objects
+DOC = $(FKSS_HOME)/doc
 
 ifndef PROBLEM
    PROBLEM = tests/examples/hs14.f90
@@ -60,8 +61,12 @@ hstests: all
 	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
 	$(FCC) tests/hs/hstests.f -lhs $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
+# Documentation
+doc:
+	$(MAKE) -C $(DOC) all
+
 clean:
 	rm -vfr *~ $(LIB)/* $(BIN)/* $(OBJ)/*
-	$(foreach i,$(SRC) $(SOL) $(TES),$(MAKE) -C $(i) clean;)
+	$(foreach i,$(SRC) $(SOL) $(TES) $(DOC),$(MAKE) -C $(i) clean;)
 
-.PHONY: lib all clean
+.PHONY: lib all clean doc
