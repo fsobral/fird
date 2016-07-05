@@ -10,3 +10,7 @@ lib/**
 # Output files and HS test files
 *.out
 analysis-all
+
+# Non .tex files in doc
+doc/**
+!doc/*.tex

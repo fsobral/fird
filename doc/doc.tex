@@ -1,0 +1,103 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amsfonts}
+\usepackage{enumerate}
+\usepackage{hyperref}
+
+\newcommand{\fkss}{\textsc{FKSS}}
+
+\title{\fkss\ -- User guide}
+\author{}
+\date{}
+
+\begin{document}
+
+\maketitle
+
+\tableofcontents
+
+\section{Introduction}
+
+The present document contains information for users interested in
+\begin{enumerate}[(i)]
+\item running the algorithm~\fkss;
+\item using~\fkss\ to solve his/her own problem;
+\item reproducing the massive tests;
+\item changing the solvers and methods used in the Feasibility and
+  Optimality phases;
+\item improving~\fkss.
+\end{enumerate}
+
+For the description of the algorithm, theoretical results and
+numerical implementation details, please see
+\begin{quote}
+  ``Global convergence of a derivative-free inexact restoration filter
+  algorithm for nonlinear programming'', P.S. Ferreira, E.W. Karas,
+  M. Sachine and F.N.C. Sobral, Submitted, 2016.
+\end{quote}
+
+\section{Download and instalation} \label{download}
+
+In order to work correctly, \fkss\ needs methods for Feasibility Phase
+and for solving quadract programming problems. In its current version,
+\fkss\ uses the Augmented Lagrangian solver Algencan~\cite{anbimasc07}
+for both cases.
+
+The steps for building \fkss\ with Algencan are described bellow.
+
+\paragraph{Building Algencan libraries}
+\begin{enumerate}
+\item Download Algencan from the TANGO Web page:
+  \begin{center}
+    \url{http://www.ime.usp.br/~egbirgin/tango}
+  \end{center}
+\item Follow the instructions to build file
+  \verb+$ALGSRC/lib/libalgencan.a+, where \verb+$ALGSRC+ is the full
+  path to the place Algencan has been installed.
+\end{enumerate}
+
+\paragraph{Building~\fkss}
+\begin{enumerate}
+\item Download or clone the GitHub repository located in
+  \begin{center}
+    \url{https://github.com/fsobral/fkss}
+  \end{center}
+\item Enter in the directory \verb+fkss+ and edit file
+  \verb+Makefile+, setting variable \verb+SOLVERLIB+ to the
+  \underline{location} of \verb+libalgencan.a+, e.g.:
+  \begin{center}
+    \verb+SOLVERLIB = $ALGSRC/lib+,
+  \end{center}
+  where \verb+ALGSRC+ is the full path to the place Algencan has been
+  installed;
+\item Type
+  \begin{center}
+    \verb+make fkss+
+  \end{center}
+  An executable file \verb+fkss+ will be created in \verb+bin/+
+  directory. This file is problem HS14 from the Hock-Schittkowski test
+  collection~\cite{Hock1980};
+\item Run the problem by typing
+  \begin{center}
+    \verb+bin/fkss+
+  \end{center}
+\end{enumerate}
+
+Users are encouraged to modify the examples contained in directory
+\verb+tests/examples/+ in order to solve their own problems. To build
+a new problem, simply type
+\begin{center}
+  \verb+make fkss PROBLEM=full/path/to/file.f90+
+\end{center}
+in the root directory of \fkss. Then, type \verb+bin/fkss+ to run the
+algorithm.
+
+\section{Solving problems} \label{solving}
+
+\section{Changing solvers} \label{solvers}
+
+\bibliography{library}
+\bibliographystyle{alpha}
+
+\end{document}
