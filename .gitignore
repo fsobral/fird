@@ -14,3 +14,4 @@ analysis-all
 # Non .tex files in doc
 doc/**
 !doc/*.tex
+!doc/Makefile
