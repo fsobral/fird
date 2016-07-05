@@ -6,6 +6,7 @@
 \usepackage{hyperref}
 
 \newcommand{\fkss}{\textsc{FKSS}}
+\newcommand{\R}{\mathbb{R}}
 
 \title{\fkss\ -- User guide}
 \author{}
@@ -94,6 +95,48 @@ in the root directory of \fkss. Then, type \verb+bin/fkss+ to run the
 algorithm.
 
 \section{Solving problems} \label{solving}
+
+Algorithm~\fkss\ is capable of solving the following optimization
+problem:
+\begin{equation} \label{solving:prob}
+  \begin{array}{lr}
+    \mbox{Minimize} & f(x) \\
+    \mbox{subject to} & {c_{\cal E}}(x) = 0 \\
+                      & {c_{\cal I}}(x) \leq 0,
+  \end{array}
+\end{equation}
+where the objective function $f:\R^n \rightarrow \R$ and the functions
+$c_i:\R^n \rightarrow \R,$ for $i \in {\cal E} \cup {\cal I},$ that
+define the constraints are continuously differentiable, but the
+derivatives of $f$ are not available.
+
+\subsection{The subroutines}
+
+In order to solve his/her own problem, users have to provide 3
+subroutines
+\begin{itemize}
+\item objective function;
+\item constraints;
+\item gradient of constraints.
+\end{itemize}
+Each subroutine interface is described in file
+\verb+src/userinterface.f90+.
+
+\subsubsection{The objective funtion}
+
+The subroutine which evaluates the objective function is given by
+\begin{center}
+\verb+USERF(N,X,F,FLAG)+
+\end{center}
+where
+\begin{itemize}
+\item \verb+N+: (input) number of variables
+\item \verb+X+: (input) \verb+N+-dimensional vector with the point in
+  which the function will be evaluated
+\item \verb+F+: (output) objective function value at \verb+X+
+\item \verb+FLAG+: (output) should be 0 if no errors occur and any
+  value otherwise
+\end{itemize}
 
 \section{Changing solvers} \label{solvers}
 
