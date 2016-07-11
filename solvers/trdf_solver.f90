@@ -6,25 +6,23 @@ module trdf_solver
 
 
   ! PARAMETERS
-
-  integer, parameter :: NMAX = 1000
-  integer, parameter :: MMAX = 1000
-  integer, parameter :: JCNNZMAX = NMAX * MMAX
-  integer, parameter :: HCNNZMAX = NMAX ** 2 * (1 + MMAX)
+  ! Maximum number of elements to print
   integer, parameter :: MAXXEL = 30
-  integer, parameter :: INN = 1000
 
   ! COMMON SCALARS
 
-  integer :: IC,MAXIC,TBAR_
+  ! Number of function evaluations
+  integer :: IC
+  ! Maximum number of function evaluations
+  integer :: MAXIC
+  ! Index in Y of the best point of model Q
+  integer :: TBAR_
+
   real(8) :: VQUAD_A
 
   ! COMMON ARRAYS
-
-  real(8) :: XBASE_A(INN), GOPT_A(INN), HQ_A(INN ** 2)
+  real(8), allocatable :: XBASE_A(:),GOPT_A(:),HQ_A(:)
   real(8), allocatable :: FF_(:),Q_(:),H_(:,:),Y_(:,:)
-
-
 
   ! GLOBAL USER-DEFINED SUBROUTINES
   procedure(evalf  ), pointer :: uevalf
@@ -95,13 +93,11 @@ contains
 
     maxfcnt = 1000 * n
 
-    rbeg = rho !max(10.0D0 * epsopt, rho)
+    rbeg = rho
 
     rend = epsopt
 
     xeps = 1.0D-08
-
-    !delta = max(DELMIN, rbeg, delta)
 
     call TRDFSUB(N,NPT,Y,L,U,M,EQUATN,LINEAR,CCODED,MAXFCNT,RBEG, &
          REND,XEPS,VERBOSE,NF,ALPHA,FFILTER,HFILTER,FILTERTEST,   &
@@ -159,7 +155,7 @@ contains
     intent(inout) :: delta,f,x
 
     ! LOCAL ARRAYS
-    REAL(8) :: D(INN),XNOVO(INN),SL(INN),SU(INN), VETOR1(NPT+N+1),Z(INN)
+    REAL(8) :: D(n),XNOVO(n),VETOR1(NPT + N + 1),Z(n)
 
     ! LOCAL SCALARS
     logical :: forbidden
@@ -187,7 +183,7 @@ contains
     GAMMA   = 0.1D0
 
     DO I=1,N
-       Z(I) = X(I)
+       Z(I)     = X(I)
        XNOVO(I) = X(I)
     END DO
 
@@ -204,6 +200,7 @@ contains
        ! TODO: Maybe we have to deallocate it?
        ! TODO: Test allocation errors
        allocate(Y_(NPT,N),FF_(NPT),Q_(1+N+N*(N+1)/2),H_(NPT+N+1,NPT+N+1))
+       allocate(XBASE_A(N),GOPT_A(N),HQ_A(N * (N + 1) / 2))
 
     end if
 
@@ -213,11 +210,11 @@ contains
 
     GO TO 5
 
-4   CONTINUE     
+4   CONTINUE
 
     DO I=1,N
-       X(I) = XNOVO(I)                     
-       XBASE_A(I)=  XNOVO(I)                  
+       X(I)       = XNOVO(I)
+       XBASE_A(I) = XNOVO(I)
     END DO
 
 5   continue
@@ -225,7 +222,7 @@ contains
     ! Since we are rebuilding, z_k is the center of the model
     tbar_ = 1
 
-    CALL  PRIMEIROMODELO1 (N,X,Q_,H_,NPT,RHO,Y_,FF_,FLAG) 
+    CALL  PRIMEIROMODELO1 (N,Z,FZ,Q_,H_,NPT,RHO,Y_,FF_,FLAG) 
 
     IF ( OUTPUT ) WRITE(*,1002) RHO,DELTA,FF_(1),IC,MIN(N,MAXXEL), &
          (X(I), I=1,MIN(N,MAXXEL))
@@ -262,17 +259,20 @@ contains
 
     END IF
 
+    ! Evaluate the distance of the solution to z^k
+
+    DISTSQ = (10.0D0 * RHO) ** 2.0D0                 
+
     DISTZ = 0.0D0
     DO I = 1,N
-!!$       DISTZ = DISTZ + (X(I) - Z(I)) ** 2.0D0
        DISTZ = MAX(DISTZ, ABS(X(I) - Z(I)))
     END DO
 
-    DISTSQ=(10.D0*RHO)**2                 
-!!$    IF (SQRT(DSQ) .LT. 0.5D0*RHO) THEN 
-!!$    IF ( SQRT(DISTZ) .LT. 0.5D0*RHO) THEN 
-    IF ( DISTZ .LT. 0.5D0*RHO) THEN 
-       ! New criterium
+    ! If the distance to z^k is small, then verify if it is not time
+    ! to stop the whole algorithm. Otherwise, try to build the model
+    ! in a smaller radius.
+
+    IF ( DISTZ .LT. 0.5D0 * RHO ) THEN 
 
        FEAS = 0.0D0
        do I = 1,M
@@ -285,23 +285,27 @@ contains
           END IF
        end do
 
-       ! TODO: Test only exiting with epsilon tol
+       ! If z^k is feasible, then stop then exit (and stop the
+       ! algorithm)
+       
        IF (RHO .LE. RHOEND .AND. FEAS .LE. EPSFEAS) GO TO 31
 
-       KN=0
-       DO   K=1,NPT
-          SUM=0D0
-          DO   J=1,N
-             SUM=SUM+(Y_(K,J)-Z(J))**2
-!!$             SUM=SUM+(Y_(K,J)-X(J))**2
+       ! Test the distance of the points in Y to the feasibility point
+       ! z^k
+
+       KN = 0
+       DO K = 1,NPT
+          SUM = 0.0D0
+          DO J = 1,N
+             SUM = SUM + (Y_(K,J) - Z(J)) ** 2.0D0
           END DO
-          IF (SUM .GT. DISTSQ) THEN
-             KN=K
+          IF ( SUM .GT. DISTSQ ) THEN
+             KN = K
              exit
           END IF
        END DO
 
-       IF (KN .EQ. 0) RHO = GAMMA * RHO      
+       IF ( KN .EQ. 0 ) RHO = GAMMA * RHO      
 
        GO TO 4
     END IF
@@ -312,15 +316,18 @@ contains
     IF ( OUTPUT ) WRITE(*,1006) F
 
     ! CHOOSE WHO LEAVE Y CALCULATING THE VALUE OF SIGMA. THE VARIABLE
-    ! IT' IS CHOOSEN FOR DEFINE WHO LEAVE.
+    ! 'T' IS CHOOSEN FOR DEFINING WHO LEAVES. WHEN THE SET Y IS BEING
+    ! REPURPOSED, THEN TBAR_ CONTAINS THE BEST POINT OF THE PREVIOUS
+    ! ITERATION.    
 
     t = tbar_
     CALL SIGMA(H_,N,NPT,Y_,X,VETOR1,SIGM,ALFA,BETA,TAU,t,DELTA)
 
     ! IF ANY REDUCTION IN F, PUT X IN INTERPOLATION SET.
-    IF (F .LE. FZ) THEN  
+
+    IF ( F .LE. FZ ) THEN  
        IF ( OUTPUT ) WRITE(*,1005) t
-       DO I=1, N
+       DO I = 1,N
           Y_(t,I) = X(I) 
        END DO
     ELSE
@@ -332,25 +339,33 @@ contains
 
     CALL ATUALIZAQ(H_, N, NPT, Q_, DELTA, Y_, X, F, t) 
 
+    ! Test sufficient reduction of the objective function and filter
+
 23  IF ( F .LE. FZ + 0.1D0 * (QX - QZ) ) THEN
 
-       ! New criterium
-
        FEAS = 0.0D0
+
        do I = 1,M
+
           CALL UEVALC(N,X,I,C,FLAG)
           IF ( FLAG .NE. 0 ) GOTO 31          
+
           IF ( EQUATN(I) ) THEN
              FEAS = MAX(FEAS,ABS(C))
           ELSE
              FEAS = MAX(FEAS,MAX(0.0D0,C))
           END IF
+
        end do
+
+       ! Filter test
 
        forbidden = filterTest(F,FEAS,ALPHA,nf,ffilter,hfilter)
 
        if ( .not. forbidden ) then
-!!$          IF ((F-FOPT) .GE. (0.7D0*VQUAD)) THEN
+
+          ! Increase TR radius in case of high decrease
+
           IF ( F - FZ .GE. 0.7D0 * (QX - QZ) .OR. &
                DISTZ .LT. DELTA ) THEN
              DELTA = DELTA  
@@ -364,7 +379,9 @@ contains
           DO I=1, N
              XNOVO(I) = X(I)
           END DO
+
           FLAG = 0
+
           GO TO 31 
        end if
 
@@ -374,40 +391,46 @@ contains
        DELTA = 5.0D-1 * DELTA
        GOTO 4
     END IF
+
     IF (IC == MAXIC) THEN
        FLAG = 3
        GO TO 31
     END IF
-!!$    IF ( RHO .LE. RHOEND ) THEN
+
+    ! If RHO is too low and no point is found not belonging to the
+    ! filter, then declare failure in the optimization phase.
+
     IF ( RHO .LE. 1.0D-15 ) THEN
        FLAG = 4
        GOTO 31
     END IF
-!!$    IF ((RHO .LE. RHOEND) .OR. (IC == MAXIC)) GO TO 31
-    KN=0
-    DO   K=1,NPT
-       SUM=0D0
-       DO   J=1,N
-!!$          SUM=SUM+(Y_(K,J)-X(J))**2
-          SUM=SUM+(Y_(K,J)-Z(J))**2
+
+    ! Poisedness test
+
+    KN = 0
+    DO K = 1,NPT
+       SUM = 0.0D0
+       DO J = 1,N
+          SUM = SUM + (Y_(K,J) - Z(J)) ** 2.0D0
        END DO
-       IF (SUM .GT. DISTSQ) THEN
-          KN=K
+       IF ( SUM .GT. DISTSQ ) THEN
+          KN = K
           exit
        END IF
     END DO
 
-    IF (KN .GT. 0) THEN
+    IF ( KN .GT. 0 ) THEN
        DELTA = 5.0D-1 * DELTA
        GOTO 4
     END IF
 
     DELTA = RHO  
-    RHO = GAMMA * RHO      
+    RHO   = GAMMA * RHO      
 
     GO TO 11    
 
-    ! OUTPUT DATA
+    ! Finish iterations and return
+
 31  continue           
 
     if ( OUTPUT .and. flag .eq.  0 ) write(*,1020)
@@ -424,24 +447,20 @@ contains
 
     FEAS = 0.0D0
     do I = 1,M
-       ! TODO: Test FLAG
+
        CALL UEVALC(N,X,I,C,FLAG)
+       IF ( FLAG .NE. 0 ) GOTO 31
+
        IF ( EQUATN(I) ) THEN
-          FEAS = MAX(FEAS,ABS(C))
+          FEAS = MAX( FEAS,ABS(C) )
        ELSE
-          FEAS = MAX(FEAS,MAX(0.0D0,C))
+          FEAS = MAX( FEAS,MAX(0.0D0,C) )
        END IF
     end do
 
     FCNT = IC
 
-!!$    IF ( OUTPUT ) THEN
-!!$       call cpu_time(tempofinal)
-!!$       write(*,2000) F,FEAS,RHO,DELTA,IC,(tempofinal - tempoinicial), &
-!!$                     MIN(N,MAXXEL),(X(I), I=1,MIN(N,MAXXEL))
-!!$    END IF
-
-    ! FORMATS
+    ! NON-EXECUTABLE STATEMENTS
 
 1000 FORMAT(/,'PHASE 0',/,7('-'),/,/,'FEASIBILITY =',36X,D23.8,/, &
          'NEW POINT',/,3(1X,D23.8))
@@ -484,13 +503,13 @@ contains
   ! ******************************************************************
 
   ! ********************************  FIRST MODEL  *******************************
-  SUBROUTINE  PRIMEIROMODELO1 (N,X,Q,H,NPT,DELTA,Y,FF,FLAG)
+  SUBROUTINE  PRIMEIROMODELO1 (N,X,FX,Q,H,NPT,DELTA,Y,FF,FLAG)
 
     implicit none
 
     ! SCALAR ARGUMENTS
     integer :: n,npt,flag
-    real(8) :: delta
+    real(8) :: delta,fx
 
     ! ARRAY ARGUMENTS
     real(8) :: Q(*), FF(*), x(n), H(NPT+N+1,NPT+N+1),YY(N)
@@ -540,8 +559,12 @@ contains
           Y(I+N+1,I)= X(I )-DELTA                 
        END DO
     END DO
-    DO I=1,  2*N+1 
-       DO J=1, N
+
+    ! It is possible to use the value of the objective function at the
+    ! center
+    FF(1) = FX
+    DO I = 2,2 * N + 1 
+       DO J = 1,N
           YY(J) = Y(I,J) 
        END DO
        CALL CALFUN(N,YY,FF(I),FLAG)
@@ -860,7 +883,7 @@ contains
     real(8) :: delta,dsq,xeps
 
     ! ARRAY ARGUMENTS
-    real(8) :: Q(*), X(*), XL(*),XU(*),D(INN)
+    real(8) :: Q(*), X(*), XL(*),XU(*),D(n)
     logical :: ccoded(2),equatn(m), linear(m)
 
     ! LOCAL SCALARS
@@ -868,17 +891,16 @@ contains
     real(8) :: cnorm,f,qxCur,qxNew,sum
 
     ! LOCAL ARRAYS
-    real(8) ::  XANTIGO(INN),L(N),H(NPT+N+1,NPT+N+1),U(N) 
+    real(8) ::  XANTIGO(n),L(N),H(NPT + N + 1,NPT + N + 1),U(N) 
 
     DO I = 1,N
-       L(I)=  DMAX1(XL(I) - XBASE_A(I),X(I) - XBASE_A(I)-DELTA) 
-       U(I)=  DMIN1(XU(I) - XBASE_A(I),X(I) - XBASE_A(I)+DELTA)           
+       L(I) = DMAX1(XL(I) - XBASE_A(I),X(I) - XBASE_A(I) - DELTA)
+       U(I) = DMIN1(XU(I) - XBASE_A(I),X(I) - XBASE_A(I) + DELTA)
        XANTIGO(I) = X(I)       
     END DO
 
-    DO I=1, N        
-       D(I)=X(I)-XBASE_A(I)         
-
+    DO I = 1,N    
+       D(I) = X(I) - XBASE_A(I)
     END DO
 
     CALL MEVALF(N,D,F,FLAG)
@@ -887,7 +909,7 @@ contains
 
     qxCur = F + Q(1)
 
-    CALL SOLVER(N, L, U, D, M, EQUATN, LINEAR, CCODED, &
+    CALL SOLVER(N, L, U, D, M, EQUATN, LINEAR, CCODED,      &
          mevalf, mevalg, mevalh, mevalc, mevaljac, mevalhc, &
          .false., XEPS, CNORM, FLAG)
 
@@ -911,10 +933,8 @@ contains
 
     qxNew = VQUAD_A
 
-!!$    VQUAD   = VQUAD_A - VQUAD
-
-    IF ( qxNew - qxCur .GE. 0.D0 .or. cnorm .gt. xeps)  THEN
-       DO I=1, N
+    IF ( qxNew - qxCur .GE. 0.D0 .or. cnorm .gt. xeps )  THEN
+       DO I = 1,N
           X(I) = XANTIGO(I) 
        END DO
        DSQ = 0D0
@@ -941,7 +961,7 @@ contains
     integer :: i,ii,j,jj,k
 
     ! LOCAL ARRAYS
-    real(8) :: VETORAUX(INN),DD(N,N),QQ((N+1)*(N+2)/2),TEMP(1+N+NPT)
+    real(8) :: VETORAUX(n),DD(N,N),QQ((N+1)*(N+2)/2),TEMP(1+N+NPT)
 
     DO I=1, 1+N+NPT
        TEMP(I) =  (F - VQUAD_A)* H(I, IT) ! IS LAMBDA 
@@ -996,7 +1016,7 @@ contains
   ! ******************************************************************
   ! ******************************************************************
 
-  subroutine mvv(v1,v2,n, gradd)
+  subroutine mvv(v1,v2,n,gradd)
 
     implicit none
 
@@ -1006,16 +1026,16 @@ contains
     real(8) :: gradd
 
     ! ARRAY ARGUMENTS
-    real(8) :: v1(INN),v2(INN)
+    real(8) :: v1(n),v2(n)
 
     ! LOCAL SCALARS
     real(8) :: soma
     integer :: j,n
 
-    soma=0
-    do j=1 , n
-       soma=soma +  v1(j)*v2(j)
-       gradd=soma
+    soma = 0.0D0
+    do j = 1,n
+       soma  = soma + v1(j) * v2(j)
+       gradd = soma
     end do
     return
   end subroutine mvv
@@ -1023,7 +1043,7 @@ contains
   ! ******************************************************************
   ! ******************************************************************
 
-  subroutine  mmv(HQ, S,n, v)
+  subroutine mmv(HQ,S,n,v)
 
     implicit none
 
@@ -1031,22 +1051,22 @@ contains
     ! estava com hs, e troquei para hss para nao atualizar hs desnec
 
     ! ARRAY ARGUMENTS
-    real(8) :: S(INN), HQ(INN ** 2),v(INN)
+    real(8) :: S(N), HQ(N * (N + 1) / 2),v(n)
 
     ! LOCAL ARRAYS
-    real(8) :: HSS(INN)
+    real(8) :: HSS(n)
 
     ! LOCAL SCALARS
     integer :: n,i,IH,j
 
-    IH=0
-    DO J=1,N
-       HSS(J)= 0
-       DO I=1,J
-          IH=IH+1
-          IF (I .LT. J) HSS(J)=HSS(J)+HQ(IH)*S(I)
-          HSS(I)=HSS(I)+HQ(IH)*S(J)
-          v(I)=HSS(I)
+    IH = 0
+    DO J = 1,N
+       HSS(J) = 0.0D0
+       DO I = 1,J
+          IH = IH + 1
+          IF (I .LT. J) HSS(J) = HSS(J) + HQ(IH) * S(I)
+          HSS(I) = HSS(I) + HQ(IH) * S(J)
+          v(I) = HSS(I)
        end DO
     end DO
     return
@@ -1197,14 +1217,14 @@ contains
     real(8) :: x(n)
 
     ! LOCAL ARRAYS
-    real(8) :: XA(NMAX)
+    real(8) :: XA(n)
 
     ! LOCAL SCALARS
     integer :: i
 
     flag = -1
 
-    DO I=1, N
+    DO I = 1,N
        XA(I) = X(I) + XBASE_A(I)
     END DO
 
@@ -1228,7 +1248,7 @@ contains
     real(8) :: x(n),jcval(lim)
 
     ! LOCAL ARRAYS
-    real(8) :: XA(NMAX)
+    real(8) :: XA(n)
 
     ! LOCAL SCALARS
     integer :: i
@@ -1237,7 +1257,7 @@ contains
 
     lmem = .false.
 
-    DO I=1, N
+    DO I = 1,N
        XA(I) = X(I) + XBASE_A(I)
     END DO
 
@@ -1259,12 +1279,6 @@ contains
     ! ARRAY ARGUMENTS
     integer :: hccol(lim),hcrow(lim)
     real(8) :: hcval(lim),x(n)
-
-    ! LOCAL ARRAYS
-    real(8) :: XA(NMAX)
-
-    ! LOCAL SCALARS
-    integer :: i
 
     flag = 0
 
