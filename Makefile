@@ -21,15 +21,12 @@ FCC =
 
 # Solver configuration parameters
 
-# SOLVERLIB = /opt/tango/algencan-3.0.0/lib $(FKSS_HOME)/../../trdf/trdf/lib
-# MODULES=$(FKSS_HOME)/../../trdf/trdf/src
-SOLVERLIB = /opt/tango/algencan-3.0.0/lib $(FKSS_HOME)/../trdf/lib
-MODULES=$(FKSS_HOME)/../trdf/src
+SOLVERLIB = /opt/tango/algencan-3.0.0/lib
 RESTORATION_INTERFACE = restoration
 OPTIMIZATION_INTERFACE = optimization
 
 # The following order do matters!
-SLOPTS = -ldfoirfilter -ltrdf -lalgencan 
+SLOPTS = -ldfoirfilter -lalgencan 
 
 # Linking options
 

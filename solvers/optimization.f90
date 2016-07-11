@@ -39,7 +39,7 @@ subroutine qpsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
   intent(out  ) :: hynorm,flag
   intent(inout) :: delta,fy,rho,y
 
-  call solver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
+  call trdfsolver(n,y,l,u,me,mi,evalf_,evalc_,evallc_,evalljac_, &
        nf,alpha,ffilter,hfilter,filterTest,outiter,epsfeas,  &
        epsopt,verbose,delta,fy,hynorm,rho,flag)
 
