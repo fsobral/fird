@@ -119,7 +119,7 @@ C     Some HS problems do not have derivatives of the constraints
       
       EPSOPT = 1.0D-04
 
-      FTYPE = 1
+      FTYPE = 2
 
       call fkss(n,x_,l,u,me,mi,calobjf,calcon,caljac,verbose,ftype,
      +     epsfeas,epsopt,f,feas,fcnt,flag)
