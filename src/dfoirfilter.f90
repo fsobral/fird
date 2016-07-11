@@ -225,32 +225,44 @@ contains
 
           end if
 
-          call aevalf(n,x,fz,flag)
-
-          if ( flag .ne. 0 ) then
-
-             flag = 6
-
-             exit
-
-          end if
-
           ! Test alpha and filter conditions. In case of failure,
           ! decrease feasibility tolerance. The beta test is only for
           ! display purposes.
-
-          isforb = filterTest(fz,hznorm,ALPHA,nf,ffilter,hfilter)
 
           dxznorm = evalDist(n,xp,x)
 
           if ( hznorm .ge. (1 - ALPHA) * hxnorm ) isalph = .false.
           if ( dxznorm .gt. BETA * hxnorm ) isbeta = .false.
 
-          if ( verbose ) write(*,906) isforb,isalph,isbeta
+          ! Only test the filter if it satisfies alpha condition,
+          ! since it requires the evaluation of the objective function
+
+          if ( isalph ) then
+
+             call aevalf(n,x,fz,flag)
+
+             if ( flag .ne. 0 ) then
+
+                flag = 6
+
+                exit
+
+             end if
+
+             isforb = filterTest(fz,hznorm,ALPHA,nf,ffilter,hfilter)
+
+             if ( verbose ) write(*,906) isforb,isalph,isbeta
+
+          else
+
+             if ( verbose ) write(*,914) isalph,isbeta
+
+          end if
           
           if ( isforb .or. .not. isalph ) then 
 
              currfeas = max(epsfeas, RESRFAC * currfeas)
+
              if ( verbose ) write(*,907) currfeas
 
           end if
@@ -438,6 +450,7 @@ contains
 
 912 FORMAT(3X,/,'WARNING! Solver returned FLAG ',I4,'!',/)
 913 FORMAT(3x,'Unable to reach desired feasibility.')
+914 FORMAT(3X,'Alpha?',60X,L,/,3X,'Beta?',61X,L,/)
 
   end subroutine dfoirfalg
 
