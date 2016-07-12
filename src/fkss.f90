@@ -1,6 +1,7 @@
-subroutine fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
+subroutine fkss(n,x,l,u,me,mi,uevalf,uevalc,uevaljac,verbose,ftype, &
      epsfeas,epsopt,f,feas,fcnt,flag)
 
+  use userinterface
   use dfoirfilter
 
   implicit none
@@ -14,9 +15,11 @@ subroutine fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
   real(8) :: l(n),u(n),x(n)
 
   ! EXTERNAL SUBROUTINES
-  external :: evalf,evalc,evaljac
+  procedure(evalf)   :: uevalf
+  procedure(evalc)   :: uevalc
+  procedure(evaljac) :: uevaljac
 
-  call dfoirfalg(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
+  call dfoirfalg(n,x,l,u,me,mi,uevalf,uevalc,uevaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
 end subroutine fkss
