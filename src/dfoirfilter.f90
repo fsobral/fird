@@ -7,8 +7,6 @@ module dfoirfilter
   ! PARAMETERS
   real(8), parameter :: BETA = 1.0D+03
   real(8), parameter :: ALPHA = 1.0D-1
-  real(8), parameter :: MU = 1.0D-1
-  real(8), parameter :: ETA = 2.5D-1
   ! Restoration reduction factor
   real(8), parameter :: RESRFAC = 9.5D-01
   ! Maximum number of iterations

@@ -8,6 +8,11 @@ module trdf_solver
   ! PARAMETERS
   ! Maximum number of elements to print
   integer, parameter :: MAXXEL = 30
+  ! Relation between AREd and PRED
+  real(8), parameter :: ETA  = 1.0D-1
+  real(8), parameter :: ETA1 = 7.0D-1
+  ! Stationarity parameter
+  real(8), parameter :: MU = 5.0D-1
 
   ! COMMON SCALARS
 
@@ -272,7 +277,7 @@ contains
     ! to stop the whole algorithm. Otherwise, try to build the model
     ! in a smaller radius.
 
-    IF ( DISTZ .LT. 0.5D0 * RHO ) THEN 
+    IF ( DISTZ .LT. MU * RHO ) THEN 
 
        FEAS = 0.0D0
        do I = 1,M
@@ -341,7 +346,7 @@ contains
 
     ! Test sufficient reduction of the objective function and filter
 
-23  IF ( F .LE. FZ + 0.1D0 * (QX - QZ) ) THEN
+23  IF ( F .LE. FZ + ETA * (QX - QZ) ) THEN
 
        FEAS = 0.0D0
 
@@ -366,7 +371,7 @@ contains
 
           ! Increase TR radius in case of high decrease
 
-          IF ( F - FZ .GE. 0.7D0 * (QX - QZ) .OR. &
+          IF ( F - FZ .GE. ETA1 * (QX - QZ) .OR. &
                DISTZ .LT. DELTA ) THEN
              DELTA = DELTA  
           ELSE
