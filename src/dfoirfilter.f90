@@ -46,15 +46,6 @@ contains
     ! filter algorithm for nonlinear programming" P.S. Ferreira,
     ! E.W. Karas, M. Sachine and F.N.C. Sobral, Submitted, 2016.
     !
-    ! The flag output means
-    !
-    ! 0  - Solution was found
-    ! 1  - Maximum number of OUTER iterations was reached
-    ! 2  - Maximum number of obj. function evaluations was reached
-    ! 3x - Failure in the restoration phase
-    ! 4x - Failure in the optimization phase
-    ! 5  - Memory error
-    ! 6  - User-defined function error
 
     use rinterface, only: restoration
     use ointerface, only: optimization
