@@ -121,7 +121,7 @@ C     Some HS problems do not have derivatives of the constraints
 
       FTYPE = 2
 
-      call fkss(n,x_,l,u,me,mi,calobjf,calcon,caljac,verbose,ftype,
+      call fird(n,x_,l,u,me,mi,calobjf,calcon,caljac,verbose,ftype,
      +     epsfeas,epsopt,f,feas,fcnt,flag)
 
       reldiff = (f - FEX) / max(1.0D0,abs(f),abs(FEX))

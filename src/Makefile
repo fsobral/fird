@@ -4,10 +4,10 @@ install:
 	mkdir -p $(LIB)
 	mv libdfoirfilter.a $(LIB)
 
-all: dfoirfilter.o fkss.o filters.o
+all: dfoirfilter.o fird.o filters.o
 	ar crv libdfoirfilter.a $^
 
-fkss.o: fkss.f90
+fird.o: fird.f90
 	$(FC) -c -J$(LIB) $< -o $@
 
 dfoirfilter.o: dfoirfilter.f90

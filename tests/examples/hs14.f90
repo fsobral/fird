@@ -1,4 +1,4 @@
-program FKSSMAIN
+program FIRDMAIN
 
   implicit none
 
@@ -31,7 +31,7 @@ program FKSSMAIN
 
   ftype = 1 ! Flat Filter
 
-  call fkss(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
+  call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
   deallocate(x,l,u)
@@ -133,4 +133,4 @@ contains
 
   end subroutine evaljac
 
-end program FKSSMAIN
+end program FIRDMAIN

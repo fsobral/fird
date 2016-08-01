@@ -1,13 +1,13 @@
 # Paths
 
-FKSS_HOME = $(CURDIR)
-SRC = $(FKSS_HOME)/src
-LIB = $(FKSS_HOME)/lib
-TES = $(FKSS_HOME)/tests
-SOL = $(FKSS_HOME)/solvers
-BIN = $(FKSS_HOME)/bin
-OBJ = $(FKSS_HOME)/objects
-DOC = $(FKSS_HOME)/doc
+FIRD_HOME = $(CURDIR)
+SRC = $(FIRD_HOME)/src
+LIB = $(FIRD_HOME)/lib
+TES = $(FIRD_HOME)/tests
+SOL = $(FIRD_HOME)/solvers
+BIN = $(FIRD_HOME)/bin
+OBJ = $(FIRD_HOME)/objects
+DOC = $(FIRD_HOME)/doc
 
 ifndef PROBLEM
    PROBLEM = tests/examples/hs14.f90
@@ -41,13 +41,13 @@ base:
 	mkdir -p $(LIB)
 	$(MAKE) -C $(SRC) base
 
-# Generate the main FKSS library
+# Generate the main FIRD library
 lib: base
 	$(MAKE) -C $(SOL) install
 	$(MAKE) -C $(SRC) all install
 
 # User-defined executable
-fkss: all
+fird: all
 	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
 	$(FCC) $(PROBLEM) $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
