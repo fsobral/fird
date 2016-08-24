@@ -13,6 +13,10 @@ ifndef PROBLEM
    PROBLEM = tests/examples/hs14.f90
 endif
 
+ifndef PPROBLEM
+   PPROBLEM = toyprob.f90
+endif
+
 # Compiler options
 
 CC  = gcc
@@ -57,6 +61,17 @@ hstests: all
 
 	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
 	$(FCC) tests/hs/hstests.f -lhs $(SOL)/*.o $(LOPTS) -o $(BIN)/$@
+
+# Probability test
+# To solve other probability problems using Genz's MVNDST subroutine,
+# please add the new problem in the tests/probability directory and
+# set the PPROBLEM variable accordingly
+probability: all
+	$(MAKE) -C $(TES) probability
+
+	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
+	$(FCC) tests/probability/$(PPROBLEM) -lprobability   \
+	$(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
 # Documentation
 doc:
