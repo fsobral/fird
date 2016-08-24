@@ -11,9 +11,6 @@ lib/**
 *.out
 analysis-all
 
-# Third party algorithms
-mvndstpack.f
-
 # Non .tex files in doc
 doc/**
 !doc/*.tex
