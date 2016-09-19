@@ -8,15 +8,21 @@ module ccpdata
   integer, parameter :: NOBS = 5
   ! Sparsity rate
   real(8), parameter :: SPRATE = 1.0D-01
+  ! Penalization term for the chance constraint
+  real(8), parameter :: PEN = 1.0D+04
   
   ! COMMON ARRAYS
 
   integer, allocatable :: cA(:), pA(:)
   real(8), allocatable :: A(:), b(:), c(:), corr(:), mu(:)
 
+  ! COMMON SCALARS
+
+  integer :: m
+
 contains
 
-  subroutine initialize(n, np, m, x, l, u)
+  subroutine initialize(n, np, mi, x, l, u)
 
     ! This subroutine randomly initializes the structure needed by the
     ! Chance Constrained Problem.
@@ -24,12 +30,12 @@ contains
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: n, np, m
+    integer :: n, np, mi
 
     ! ARRAY ARGUMENTS
     real(8) :: l(n), u(n), x(n)
 
-    intent(in ) :: n, np, m
+    intent(in ) :: n, np, mi
     intent(out) :: l, u, x
 
     ! LOCAL SCALARS
@@ -41,6 +47,8 @@ contains
 
     integer, allocatable :: seed(:)
     real(8), allocatable :: tmpA(:), tmpB(:)
+
+    m = mi
 
     ! Initialize the random structure
 
@@ -198,18 +206,18 @@ contains
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-  subroutine tofile(n, np, m, x, l, u, filename)
+  subroutine tofile(n, np, mi, x, l, u, filename)
 
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: n, np, m
+    integer :: n, np, mi
 
     ! ARRAY ARGUMENTS
     real(8)       :: l(n), u(n), x(n)
     character(80) :: filename
 
-    intent(in ) :: filename, n, np, m, l, u, x
+    intent(in ) :: filename, n, np, mi, l, u, x
 
     ! LOCAL SCALARS
     integer :: i, j
@@ -219,9 +227,9 @@ contains
 
     open(99, FILE=filename)
 
-    write(99, FMT=010) n, np, m
+    write(99, FMT=010) n, np, mi
 
-    do i = 1, m
+    do i = 1, mi
 
        do j = 1, n
 
