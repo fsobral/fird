@@ -154,12 +154,6 @@ contains
 
        b(i) = 0.0D0
 
-    end do
-
-    do i = 1, m
-
-       b(i) = 0.0D0
-
        do j = pA(i), pA(i + 1) - 1
 
           b(i) = b(i) + x(cA(j)) * A(j)

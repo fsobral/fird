@@ -1,6 +1,6 @@
 program CCP
 
-  use ccpstruct, only: initialize, destroy
+  use ccpdata, only: initialize, destroy
 
   implicit none
 
@@ -43,27 +43,26 @@ program CCP
 contains
 
   !------------------------------------------------------------!
-  ! SUBROUTINE EVALF                                           !
+  ! SUBROUTINE EVALPROB                                        !
   !                                                            !
-  ! Defines the objetive function.                             !
+  ! This subroutine evaluates the probability P(\x_i \le x_i)  !
+  ! for i \in \{1, \dots, np\}                                 !
   !                                                            !
   !------------------------------------------------------------!
 
-  subroutine evalf(n,x,f,flag)
-
-    use ccpdata
+  subroutine evalprob(n, x, MU, CORR, p, flag)
 
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: flag,n
-    real(8) :: f
+    integer :: flag, n
+    real(8) :: p
 
     ! ARRAY ARGUMENTS
-    real(8) :: x(n)
+    real(8) :: CORR((n - 1) * (n - 2) / 2), MU(n), x(n)
 
-    intent(in ) :: n,x
-    intent(out) :: f,flag
+    intent(in ) :: CORR, MU, n, x
+    intent(out) :: p, flag
 
     ! Interface
 
@@ -116,7 +115,47 @@ contains
     call mvndst(n, l, u, infty, corr, 5000 * n * n * n, abseps, &
                 releps, error, f, flag)
 
-    f = - PEN * f
+  end subroutine evalprob
+
+  !------------------------------------------------------------!
+  ! SUBROUTINE EVALF                                           !
+  !                                                            !
+  ! Defines the objetive function.                             !
+  !                                                            !
+  !------------------------------------------------------------!
+
+  subroutine evalf(n,x,f,flag)
+
+    use ccpdata
+
+    implicit none
+
+    ! SCALAR ARGUMENTS
+    integer :: flag,n
+    real(8) :: f
+
+    ! ARRAY ARGUMENTS
+    real(8) :: x(n)
+
+    intent(in ) :: n,x
+    intent(out) :: f,flag
+
+    ! LOCAL SCALARS
+    integer :: i
+
+    flag = 1
+
+    ! Penalize the probability
+
+    call evalprob(np, x, mu, corr, f, flag)
+
+    if ( flag .ne. 0 ) then
+
+       return
+
+    end if
+
+    f = PEN * f
 
     ! Quadratic term
 
@@ -137,7 +176,7 @@ contains
 
   subroutine evalc(n,x,ind,c,flag)
 
-    use ccpdata, only: m, cA, pA
+    use ccpdata, only: m, cA, pA, A
 
     ! SCALAR ARGUMENTS
     integer :: flag,ind,n
@@ -158,7 +197,7 @@ contains
 
        c = 0.0
 
-       do j = pA(ind), pA(ind + 1)
+       do j = pA(ind), pA(ind + 1) - 1
 
           c = c + x(cA(j)) * A(j)
 
@@ -181,7 +220,7 @@ contains
   
   subroutine evaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
 
-    use ccpdata, only: m, cA, pA
+    use ccpdata, only: m, cA, pA, A
 
     ! SCALAR ARGUMENTS
     integer :: flag,ind,jcnnz,n
@@ -202,7 +241,7 @@ contains
 
        jcnnz = 0
 
-       do j = pA(ind), pA(ind + 1)
+       do j = pA(ind), pA(ind + 1) - 1
 
           jcnnz = jcnnz + 1
 
