@@ -5,7 +5,7 @@ install:
 lib: mvndstpack.o ccpdata.o unbiased_correlation.o
 	ar cr libprobability.a $^
 
-mvndstpack.o: %.f
+mvndstpack.o: mvndstpack.f
 	gfortran -c $< -o $@
 
 %.o: %.f90
