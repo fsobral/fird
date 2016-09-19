@@ -1,28 +1,32 @@
 program CCP
 
-  use ccpdata, only: initialize, destroy
+  use ccpdata, only: initialize, destroy, MU, CORR
 
   implicit none
 
   ! LOCAL SCALARS
   integer :: flag,ftype,i,me,mi,n,np,fcnt
   logical :: verbose
-  real(8) :: epsfeas,epsopt,f,feas
+  real(8) :: epsfeas,epsopt,f,p,feas,plim,npfrac
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
-  n  = 2
+  npfrac = 3.0D0 / 4.0D0
 
-  np = n / 2
+  n  = 10
+
+  np = INT(n * npfrac)
 
   me = 0
 
-  mi = 1
+  mi = 10
+
+  plim = 8.0D-01
 
   allocate(x(n),l(n),u(n))
 
-  call initialize(n, np, mi, x, l, u)
+  call initialize(n, np, mi, x, l, u, plim)
 
   ! Call the solver
 
@@ -36,9 +40,17 @@ program CCP
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
+  call evalprob(np, x, MU, CORR, p, flag)
+
+  write(*, FMT=010) p
+
   deallocate(x,l,u)
 
   call destroy()
+
+  ! NON-EXECUTABLE STATEMENTS
+
+010 FORMAT(/,'Probability:',1X,1P,E15.8,/)
 
 contains
 
@@ -113,7 +125,7 @@ contains
     flag = 0
 
     call mvndst(n, l, u, infty, corr, 5000 * n * n * n, abseps, &
-                releps, error, f, flag)
+                releps, error, p, flag)
 
   end subroutine evalprob
 
@@ -155,7 +167,7 @@ contains
 
     end if
 
-    f = PEN * f
+    f = PEN * (plim - f)
 
     ! Quadratic term
 
@@ -176,7 +188,9 @@ contains
 
   subroutine evalc(n,x,ind,c,flag)
 
-    use ccpdata, only: m, cA, pA, A
+    use ccpdata, only: m, cA, pA, A, b
+
+    implicit none
 
     ! SCALAR ARGUMENTS
     integer :: flag,ind,n
@@ -195,7 +209,7 @@ contains
 
     if ( ind .ge. 1 .and. ind .le. m ) then
 
-       c = 0.0
+       c = - b(ind)
 
        do j = pA(ind), pA(ind + 1) - 1
 
@@ -221,6 +235,8 @@ contains
   subroutine evaljac(n,x,ind,jcvar,jcval,jcnnz,flag)
 
     use ccpdata, only: m, cA, pA, A
+
+    implicit none
 
     ! SCALAR ARGUMENTS
     integer :: flag,ind,jcnnz,n

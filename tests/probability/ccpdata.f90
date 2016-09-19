@@ -18,11 +18,12 @@ module ccpdata
 
   ! COMMON SCALARS
 
-  integer :: m
+  integer :: m, np
+  real(8) :: plim
 
 contains
 
-  subroutine initialize(n, np, mi, x, l, u)
+  subroutine initialize(n, np_, mi, x, l, u, plim_)
 
     ! This subroutine randomly initializes the structure needed by the
     ! Chance Constrained Problem.
@@ -30,12 +31,13 @@ contains
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: n, np, mi
+    integer :: n, np_, mi
+    real(8) :: plim_
 
     ! ARRAY ARGUMENTS
     real(8) :: l(n), u(n), x(n)
 
-    intent(in ) :: n, np, mi
+    intent(in ) :: n, np_, mi, plim_
     intent(out) :: l, u, x
 
     ! LOCAL SCALARS
@@ -48,7 +50,11 @@ contains
     integer, allocatable :: seed(:)
     real(8), allocatable :: tmpA(:), tmpB(:)
 
-    m = mi
+    m  = mi
+
+    np = np_
+
+    plim = plim_
 
     ! Initialize the random structure
 
@@ -101,6 +107,8 @@ contains
           if ( randnum .le. SPRATE ) then
 
              call random_number(A(pos))
+
+             if ( j .le. np ) A(pos) = - abs(A(pos))
 
              cA(pos) = j
 
