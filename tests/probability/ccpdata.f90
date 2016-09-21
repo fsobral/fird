@@ -80,7 +80,7 @@ contains
 
        call random_number(randnum)
 
-       c(i) = - 1.0D+01 + 2.0D+01 * randnum
+       c(i) = 1.0D0 + 1.0D+01 * randnum
 
     end do
 
@@ -88,7 +88,7 @@ contains
 
        call random_number(randnum)
 
-       c(i) = 1.0D0 + 1.0D+01 * randnum
+       c(i) = - 1.0D+01 + 2.0D+01 * randnum
 
     end do
 
