@@ -39,29 +39,29 @@ SUBROUTINE UNBIASED_CORRELATION( N, A, B, msg, lag, r, t, m)
 
   IMPLICIT NONE
 
-  INTEGER, INTENT(IN)             :: N
-  REAL, DIMENSION(N), INTENT(IN)  :: A 
-  REAL, DIMENSION(N), INTENT(IN)  :: B           
-  REAL, INTENT(IN)                :: msg 
-  INTEGER, INTENT(IN)             :: lag 
-  REAL, INTENT(OUT)               :: r
-  REAL, INTENT(OUT)               :: t
-  INTEGER, INTENT(OUT)            :: m
+  INTEGER, INTENT(IN)                :: N
+  REAL(8), DIMENSION(N), INTENT(IN)  :: A 
+  REAL(8), DIMENSION(N), INTENT(IN)  :: B           
+  REAL(8), INTENT(IN)                :: msg 
+  INTEGER, INTENT(IN)                :: lag 
+  REAL(8), INTENT(OUT)               :: r
+  REAL(8), INTENT(OUT)               :: t
+  INTEGER, INTENT(OUT)               :: m
 
 
-  REAL, DIMENSION(:), ALLOCATABLE :: x
-  REAL, DIMENSION(:), ALLOCATABLE :: y
-  REAL, DIMENSION(:), ALLOCATABLE :: xdev
-  REAL, DIMENSION(:), ALLOCATABLE :: ydev
-  REAL, DIMENSION(:), ALLOCATABLE :: xdevydev
-  REAL, DIMENSION(:), ALLOCATABLE :: xdevxdev
-  REAL, DIMENSION(:), ALLOCATABLE :: ydevydev
+  REAL(8), DIMENSION(:), ALLOCATABLE :: x
+  REAL(8), DIMENSION(:), ALLOCATABLE :: y
+  REAL(8), DIMENSION(:), ALLOCATABLE :: xdev
+  REAL(8), DIMENSION(:), ALLOCATABLE :: ydev
+  REAL(8), DIMENSION(:), ALLOCATABLE :: xdevydev
+  REAL(8), DIMENSION(:), ALLOCATABLE :: xdevxdev
+  REAL(8), DIMENSION(:), ALLOCATABLE :: ydevydev
 
-  REAL                            :: xmn
-  REAL                            :: ymn
-  REAL                            :: COVxy
-  REAL                            :: Sx
-  REAL                            :: Sy
+  REAL(8)                            :: xmn
+  REAL(8)                            :: ymn
+  REAL(8)                            :: COVxy
+  REAL(8)                            :: Sx
+  REAL(8)                            :: Sy
 
 
   ALLOCATE( x(1:3*N) )

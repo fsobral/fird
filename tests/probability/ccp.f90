@@ -12,9 +12,9 @@ program CCP
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
-  npfrac = 3.0D0 / 4.0D0
+  npfrac = 1.0D0 / 2.0D0
 
-  n  = 10
+  n  = 20
 
   np = INT(n * npfrac)
 
