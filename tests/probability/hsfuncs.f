@@ -12,7 +12,7 @@ C     SCALAR ARGUMENTS
 
 C     COMMON SCALARS
 
-      integer N,NILI,NINL,NELI,NENL,NEX,NTP
+      integer N,NILI,NINL,NELI,NENL,NTP
 
 C     COMMON BLOCKS
 
@@ -71,6 +71,10 @@ C     COMMON BLOCKS
       common/L13/XL
       common/L14/XU
 
+C     LOCAL SCALARS
+
+      integer i
+
 C     INITIAL POINT AND BOX CONSTRAINTS.
 
       do i = 1,n_
@@ -95,7 +99,7 @@ C     INITIAL POINT AND BOX CONSTRAINTS.
 
 C     CONSTRAINTS
 
-      do i = 1,M
+      do i = 1,NILI + NINL + NELI + NENL
          INDEX1(i) = .false.
          INDEX2(i) = .false.
       end do
@@ -145,7 +149,7 @@ C     ******************************************************************
 
       f = FX
 
-      end subroutine calobjf
+      end
 
 C     ******************************************************************
 C     ******************************************************************
@@ -203,7 +207,7 @@ C     LOCAL SCALARS
       
       c = - G(rind)
 
-      end subroutine calcon
+      end
 
 C     ******************************************************************
 C     ******************************************************************

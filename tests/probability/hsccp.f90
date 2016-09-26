@@ -11,7 +11,7 @@ program HSCCP
 
      subroutine hsgetdim(nprob, n_, me_, mi_)
        ! SCALAR ARGUMENTS
-       integer nprob, n_, me_, mi_
+       integer :: nprob, n_, me_, mi_
 
        intent(in) :: nprob
        intent(out) :: n_, me_, mi_
@@ -32,7 +32,7 @@ program HSCCP
   ! LOCAL SCALARS
   integer :: flag,ftype,i,me,mi,n,nt,np,fcnt,prob
   logical :: verbose
-  real(8) :: epsfeas,epsopt,f,p,feas,plim,npfrac
+  real(8) :: epsfeas,epsopt,f,p,feas,plim
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
@@ -41,11 +41,9 @@ program HSCCP
 
   read(*,*) prob
 
-  npfrac = 1.0D0 / 2.0D0
+  call hsgetdim(prob, n, me, mi)
 
-  call hsgetdim(nprob, n, me, mi)
-
-  np = INT(n * npfrac)
+  np = n
 
   n = n + np
 
@@ -210,9 +208,9 @@ contains
 
     flag = 1
 
-    ! Penalize the probability
+    ! Evaluate the probability
 
-    call evalprob(np, x, mu, corr, ABSERR, RELERR, hsf, flag)
+    call evalprob(np, x, mu, corr, ABSERR, RELERR, pf, flag)
 
     if ( flag .ne. 0 ) then
 
@@ -222,7 +220,7 @@ contains
 
     ! Evaluate the HS objective function
 
-    call hsobjf(n - np, x(np + 1), pf, flag)
+    call hsobjf(n - np, x(np + 1), hsf, flag)
 
     if ( flag .ne. 0 ) then
 
@@ -230,7 +228,7 @@ contains
 
     end if
 
-    f = hsf + PEN * (plim - f)
+    f = hsf + PEN * (plim - pf)
 
     ! Linear term in the probability variables
 
@@ -345,11 +343,14 @@ contains
     interface
 
        subroutine hsjac(nn,x_,ind,jcvar,jcval,jcnnz,flag)
+         ! PARAMETERS
+         integer, parameter :: MMAX = 1000
+         integer, parameter :: NMAX = 1000
          ! SCALAR ARGUMENTS
          integer :: flag,ind,jcnnz,nn
          ! ARRAY ARGUMENTS
-         integer :: jcvar(:)
-         real(8) :: x_(nn), jcval(:)
+         integer :: jcvar(MMAX * NMAX)
+         real(8) :: x_(nn), jcval(MMAX * NMAX)
 
          intent(in) :: nn, x_, ind
          intent(out) :: jcvar, jcval, jcnnz, flag
@@ -364,7 +365,7 @@ contains
     
     if ( ind .ge. 1 .and. ind .le. m ) then
 
-       call hsjac(n - np, x_(np + 1), ind, jcvar, jcval, jcnnz, flag)
+       call hsjac(n - np, x(np + 1), ind, jcvar, jcval, jcnnz, flag)
 
        if ( flag .ne. 0 ) then
 

@@ -121,7 +121,7 @@ contains
 
     ! Initialize module objects
 
-    allocate(b(m), c(np), corr((np - 1) * np / 2), mu(np), &
+    allocate(c(np), corr((np - 1) * np / 2), mu(np), &
              mObs(np, np), A(np * m), pA(m + 1), cA(np * m))
 
     ! Randomly generates vector 'c'
