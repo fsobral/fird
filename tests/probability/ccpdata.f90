@@ -10,6 +10,11 @@ module ccpdata
   real(8), parameter :: SPRATE = 1.0D-01
   ! Penalization term for the chance constraint
   real(8), parameter :: PEN = 1.0D+04
+
+  ! Relative error for subroutine MVNDST
+  real(8), parameter :: RELERR = 1.0D-05
+  ! Absolute error for subroutine MVNDST
+  real(8), parameter :: ABSERR = 1.0D-08
   
   ! COMMON ARRAYS
 
@@ -21,8 +26,32 @@ module ccpdata
   integer :: m, np
   real(8) :: plim
 
+  ! PRIVATE SCALARS
+
+  integer :: initial_seed
+
+  private :: initial_seed
+
 contains
 
+  ! ---------------------------------------------------------- !
+  ! ---------------------------------------------------------- !
+  
+  subroutine set_seed(is)
+
+    ! This subroutine sets the initial seed. It is usefull for massive
+    ! random tests.
+
+    ! SCALAR ARGUMENTS
+    integer :: is
+
+    initial_seed = is
+
+  end subroutine set_seed
+
+  ! ---------------------------------------------------------- !
+  ! ---------------------------------------------------------- !
+  
   subroutine initialize(n, np_, mi, x, l, u, plim_)
 
     ! This subroutine randomly initializes the structure needed by the
@@ -87,7 +116,7 @@ contains
     allocate(seed(nseed))
 
     do i = 1,nseed
-       seed(i) = 123456789
+       seed(i) = initial_seed
     end do
 
     call random_seed(PUT=seed)
@@ -193,18 +222,21 @@ contains
 
     end do
 
-    ! Randomly generates correlation matrix 'corr', which is simmetric
-    ! and has 1's in the diagonal (in vector form)
+    ! Randomly generates correlation matrix 'corr', which is
+    ! simmetric, definite positive and has 1's in the diagonal (in
+    ! vector form)
 
-    call genRandHouseDP(np,mObs,0.0D0,1.0D+01)
+    call genRandHouseDP(np,mObs,0.0D0,1.0D+02)
 
     do j = 1, np
 
        do i = 1, j - 1
 
-          corr(i + (j - 1) * (j - 2) / 2) = mObs(i,j)
+          pos = i + (j - 1) * (j - 2) / 2
 
-          write(*,*) i, j, corr(i + (j - 1) * (j - 2) / 2)
+          corr(pos) = mObs(i,j) / (sqrt(mObs(i,i)) * sqrt(mObs(j,j)))
+
+          ! write(*,*) i, j, corr(pos)
 
        end do
 
@@ -222,8 +254,6 @@ contains
 !!$
 !!$          mObs(i,j) = sqrt(- 2.0D0 * log(u1)) * cos(2.0D0 * pi * u2)
 !!$          
-!!$!          if ( j .gt. 1 ) mObs(i,j) = mObs(i,1) * mObs(i,j)
-!!$
 !!$          if ( i + 1 .le. NOBS ) then
 !!$                
 !!$             mObs(i + 1,j) = sqrt(- 2.0D0 * log(u1)) * sin(2.0D0 * pi * u2)
@@ -269,6 +299,7 @@ contains
     ! values. If is negative, also defines this range, but the matrix
     ! has chance to be indefinite
 
+    implicit none
 
     ! PARAMETERS
     real(8),parameter :: epsdiag = 1.0D-5
@@ -331,12 +362,15 @@ contains
   ! ---------------------------------------------------------- !
   
   subroutine genHouseholderOrt(n,Q,magnitude)
+
     ! This subroutine generates an randomly generated orthogonal
     ! Householder matrix:
     !
     ! I - 2 * (u * u^T) / (u^T * u)
     !
     ! and returns such matrix in Q
+
+    implicit none
 
     ! SCALAR ARGUMENTS
     integer :: n
@@ -358,7 +392,7 @@ contains
     dp = 0.0D0
     do i = 1,n
        CALL RANDOM_NUMBER(rnumber)
-       u(i) = abs(magnitude) + 2.0D0 * abs(magnitude) * rnumber
+       u(i) = - abs(magnitude) + 2.0D0 * abs(magnitude) * rnumber
        dp = dp + u(i) ** 2.0D0
     end do
 

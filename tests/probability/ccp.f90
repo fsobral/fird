@@ -1,20 +1,25 @@
 program CCP
 
-  use ccpdata, only: initialize, destroy, MU, CORR
+  use ccpdata, only: ABSERR, initialize, destroy, MU, CORR, RELERR, &
+                     set_seed
 
   implicit none
 
   ! LOCAL SCALARS
-  integer :: flag,ftype,i,me,mi,n,np,fcnt
+  integer :: flag,ftype,i,me,mi,n,np,fcnt,prob
   logical :: verbose
   real(8) :: epsfeas,epsopt,f,p,feas,plim,npfrac
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
+  ! Read the seed
+
+  read(*,*) prob
+
   npfrac = 1.0D0 / 2.0D0
 
-  n  = 20
+  n  = 4
 
   np = INT(n * npfrac)
 
@@ -25,6 +30,8 @@ program CCP
   plim = 8.0D-01
 
   allocate(x(n),l(n),u(n))
+
+  call set_seed(12345678 + prob)
 
   call initialize(n, np, mi, x, l, u, plim)
 
@@ -40,9 +47,16 @@ program CCP
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
-  call evalprob(np, x, MU, CORR, p, flag)
+  call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
-  write(*, FMT=010) p
+  if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, p, &
+       fcnt, flag
+
+  open(99, FILE='ccp.out')
+
+  write(99, FMT=020) prob, n, np, mi, f, feas, p, fcnt, flag
+
+  close(99)
 
   deallocate(x,l,u)
 
@@ -50,7 +64,8 @@ program CCP
 
   ! NON-EXECUTABLE STATEMENTS
 
-010 FORMAT(/,'Probability:',1X,1P,E15.8,/)
+020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,F10.8,1X,I10, &
+           I3)
 
 contains
 
@@ -62,18 +77,18 @@ contains
   !                                                            !
   !------------------------------------------------------------!
 
-  subroutine evalprob(n, x, MU, CORR, p, flag)
+  subroutine evalprob(n, x, MU, CORR, ABSERR, RELERR, p, flag)
 
     implicit none
 
     ! SCALAR ARGUMENTS
     integer :: flag, n
-    real(8) :: p
+    real(8) :: ABSERR, p, RELERR
 
     ! ARRAY ARGUMENTS
     real(8) :: CORR((n - 1) * (n - 2) / 2), MU(n), x(n)
 
-    intent(in ) :: CORR, MU, n, x
+    intent(in ) :: ABSERR, CORR, MU, n, RELERR, x
     intent(out) :: p, flag
 
     ! Interface
@@ -97,7 +112,7 @@ contains
 
     ! LOCAL SCALARS
     integer :: i
-    real(8) :: error,releps,abseps
+    real(8) :: error
 
     ! LOCAL ARRAYS
     real(8) :: l(n), u(n)
@@ -118,14 +133,10 @@ contains
 
     end do
 
-    releps = 5.0D-05
-    
-    abseps = 0.0D0
-
     flag = 0
 
-    call mvndst(n, l, u, infty, corr, 5000 * n * n * n, abseps, &
-                releps, error, p, flag)
+    call mvndst(n, l, u, infty, corr, 5000 * n * n * n, ABSERR, &
+                RELERR, error, p, flag)
 
   end subroutine evalprob
 
@@ -159,7 +170,7 @@ contains
 
     ! Penalize the probability
 
-    call evalprob(np, x, mu, corr, f, flag)
+    call evalprob(np, x, mu, corr, ABSERR, RELERR, f, flag)
 
     if ( flag .ne. 0 ) then
 
