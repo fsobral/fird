@@ -73,6 +73,15 @@ probability: all
 	$(FCC) tests/probability/$(PPROBLEM) -lprobability   \
 	$(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
+hsprobability: all
+	$(MAKE) -C $(TES) hs
+	$(MAKE) -C $(TES) hsprobability
+
+	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) -J$(LIB)\
+	$(FCC) tests/probability/hsccp.f90 -lprobability -lhs  \
+	$(SOL)/*.o $(LOPTS) -o $(BIN)/$@
+
+
 # Documentation
 doc:
 	$(MAKE) -C $(DOC) all
