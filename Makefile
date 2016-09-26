@@ -69,7 +69,7 @@ hstests: all
 probability: all
 	$(MAKE) -C $(TES) probability
 
-	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) \
+	$(FC) $(foreach i,$(SOLVERLIB) $(LIB),-L$(i) ) -J$(LIB)\
 	$(FCC) tests/probability/$(PPROBLEM) -lprobability   \
 	$(SOL)/*.o $(LOPTS) -o $(BIN)/$@
 
