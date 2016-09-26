@@ -476,7 +476,7 @@ contains
          3X,5X,'Objective function =',19X,D23.8,/,&
          3X,5X,'Function evaluations =',30X,I10,/,&
          3X,5X,'Current model center (first ',I3, &
-         ' elements)',/,3X,6X,3(1X,D21.8))
+         ' elements)',/,(3X,16X,3(1X,1PD16.8)))
 1003 FORMAT(/,3X,'SOLVED TR SUBPROBLEM.',/,                 &
          3X,5X,'RHO =',45X,D12.5,/,                      &
          3X,5X,'Delta =',43X,D12.5,/,                    &
