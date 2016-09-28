@@ -71,12 +71,19 @@ program HSCCP
 
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
-  if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, p, &
-       fcnt, flag
+  if ( verbose ) then
+
+     write(*, FMT=021) 'PRB', 'NO', 'NP', 'INEQ', 'EQ', 'F', 'FEAS', &
+          'PROB', 'FEVAL', 'FLG'
+     
+     write(*, FMT=022) prob, n - np, np, mi, me, f, feas, &
+                       p, fcnt, flag
+ 
+  end if
 
   open(99, FILE='ccp.out')
 
-  write(99, FMT=020) prob, n, np, mi, f, feas, p, fcnt, flag
+  write(99, FMT=020) prob, n - np, np, mi, me, f, feas, p, fcnt, flag
 
   close(99)
 
@@ -86,8 +93,12 @@ program HSCCP
 
   ! NON-EXECUTABLE STATEMENTS
 
-020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,F10.8,1X,I10, &
-       I3)
+020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,F10.8,1X, &
+         I10,1X,I3)
+021 FORMAT(/,A3,1X,A4,1X,A4,1X,A4,1X,A4,1X,A12,1X,A12,1X,A6,1X, &
+         A9,1X,A3)
+022 FORMAT(I3,1X,I4,1X,I4,1X,I4,1X,I4,1X,1P,E12.4,1X,1P,E12.4,1X, &
+         0P,F6.4,1X,I9,1X,I3)
 
 contains
 
