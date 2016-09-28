@@ -41,6 +41,8 @@ program HSCCP
 
   read(*,*) prob
 
+  if ( .not. verifyProb(prob) ) stop
+
   call hsgetdim(prob, n, me, mi)
 
   np = n
@@ -411,5 +413,165 @@ contains
     end if
 
   end subroutine evaljac
+
+  !------------------------------------------------------------!
+  ! SUBROUTINE VERIFYPROB                                      !
+  !                                                            !
+  ! Tests whether the HS problem can be selected or not        !
+  !                                                            !
+  !------------------------------------------------------------!
+
+  function verifyProb(prob)
+
+    ! SCALAR ARGUMENTS
+
+    integer :: prob
+
+    ! RETURN VALUE
+
+    logical :: verifyProb
+
+    verifyProb = .false.
+
+    if ( prob .eq. 10 .or. & 
+         prob .eq. 11 .or. & 
+         prob .eq. 12 .or. & 
+         prob .eq. 13 .or. & 
+         prob .eq. 15 .or. & 
+         prob .eq. 16 .or. & 
+         prob .eq. 17 .or. & 
+         prob .eq. 18 .or. & 
+         prob .eq. 19 .or. & 
+         prob .eq. 20 .or. & 
+         prob .eq. 21 .or. & 
+         prob .eq. 22 .or. & 
+         prob .eq. 23 .or. & 
+         prob .eq. 24 .or. & 
+         prob .eq. 29 .or. & 
+         prob .eq. 30 .or. & 
+         prob .eq. 31 .or. & 
+         prob .eq. 33 .or. & 
+         prob .eq. 34 .or. & 
+         prob .eq. 35 .or. & 
+         prob .eq. 36 .or. & 
+         prob .eq. 37 .or. & 
+         prob .eq. 43 .or. & 
+         prob .eq. 44 .or. & 
+         prob .eq. 57 .or. & 
+         prob .eq. 58 .or. & 
+         prob .eq. 59 .or. & 
+         prob .eq. 64 .or. & 
+         prob .eq. 65 .or. & 
+         prob .eq. 66 .or. & 
+         prob .eq. 67 .or. & 
+         prob .eq. 70 .or. & 
+         prob .eq. 72 .or. & 
+         prob .eq. 76 .or. & 
+         prob .eq. 83 .or. & 
+         prob .eq. 84 .or. & 
+         prob .eq. 85 .or. & 
+         prob .eq. 86 .or. & 
+         prob .eq. 88 .or. & 
+         prob .eq. 89 .or. & 
+         prob .eq. 90 .or. & 
+         prob .eq. 91 .or. & 
+         prob .eq. 92 .or. & 
+         prob .eq. 93 .or. & 
+         prob .eq. 95 .or. & 
+         prob .eq. 96 .or. & 
+         prob .eq. 97 .or. & 
+         prob .eq. 98 .or. & 
+         prob .eq. 100 .or. & 
+         prob .eq. 101 .or. & 
+         prob .eq. 102 .or. & 
+         prob .eq. 103 .or. & 
+         prob .eq. 104 .or. & 
+         prob .eq. 105 .or. & 
+         prob .eq. 106 .or. & 
+         prob .eq. 108 .or. & 
+         prob .eq. 113 .or. & 
+         prob .eq. 116 .or. & 
+         prob .eq. 117 .or. & 
+         prob .eq. 118 .or. & 
+         prob .eq. 215 .or. & 
+         prob .eq. 218 .or. & 
+         prob .eq. 220 .or. & 
+         prob .eq. 221 .or. & 
+         prob .eq. 222 .or. & 
+         prob .eq. 223 .or. & 
+         prob .eq. 224 .or. & 
+         prob .eq. 225 .or. & 
+         prob .eq. 226 .or. & 
+         prob .eq. 227 .or. & 
+         prob .eq. 228 .or. & 
+         prob .eq. 230 .or. & 
+         prob .eq. 231 .or. & 
+         prob .eq. 232 .or. & 
+         prob .eq. 233 .or. & 
+         prob .eq. 234 .or. & 
+         prob .eq. 236 .or. & 
+         prob .eq. 237 .or. & 
+         prob .eq. 238 .or. & 
+         prob .eq. 239 .or. & 
+         prob .eq. 249 .or. & 
+         prob .eq. 250 .or. & 
+         prob .eq. 251 .or. & 
+         prob .eq. 253 .or. & 
+         prob .eq. 264 .or. & 
+         prob .eq. 268 .or. & 
+         prob .eq. 270 .or. & 
+         prob .eq. 277 .or. & 
+         prob .eq. 278 .or. & 
+         prob .eq. 279 .or. & 
+         prob .eq. 280 .or. & 
+         prob .eq. 284 .or. & 
+         prob .eq. 285 .or. & 
+         prob .eq. 315 .or. & 
+         prob .eq. 323 .or. & 
+         prob .eq. 324 .or. & 
+         prob .eq. 326 .or. & 
+         prob .eq. 327 .or. & 
+         prob .eq. 329 .or. & 
+         prob .eq. 330 .or. & 
+         prob .eq. 331 .or. & 
+         prob .eq. 332 .or. & 
+         prob .eq. 337 .or. & 
+         prob .eq. 339 .or. & 
+         prob .eq. 340 .or. & 
+         prob .eq. 341 .or. & 
+         prob .eq. 342 .or. & 
+         prob .eq. 343 .or. & 
+         prob .eq. 346 .or. & 
+         prob .eq. 347 .or. & 
+         prob .eq. 349 .or. & 
+         prob .eq. 354 .or. & 
+         prob .eq. 356 .or. & 
+         prob .eq. 359 .or. & 
+         prob .eq. 360 .or. & 
+         prob .eq. 361 .or. & 
+         prob .eq. 362 .or. & 
+         prob .eq. 363 .or. & 
+         prob .eq. 364 .or. & 
+         prob .eq. 365 .or. & 
+         prob .eq. 366 .or. & 
+         prob .eq. 369 .or. & 
+         prob .eq. 372 .or. & 
+         prob .eq. 374 .or. & 
+         prob .eq. 380 .or. & 
+         prob .eq. 384 .or. & 
+         prob .eq. 385 .or. & 
+         prob .eq. 386 .or. & 
+         prob .eq. 387 .or. & 
+         prob .eq. 388 .or. & 
+         prob .eq. 389 .or. & 
+         prob .eq. 392 ) then
+
+       verifyProb = .true.
+
+    end if
+
+    return
+
+  end function verifyProb
 
 end program HSCCP
