@@ -61,7 +61,7 @@ program HSCCP
 
   ! Call the solver
 
-  verbose = .true.
+  verbose = .false.
 
   epsfeas = 1.0D-8
   epsopt  = 1.0D-4
@@ -73,16 +73,12 @@ program HSCCP
 
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
-  if ( verbose ) then
-
-     write(*, FMT=021) 'PRB', 'NO', 'NP', 'INEQ', 'EQ', 'F', 'FEAS', &
-          'PROB', 'FEVAL', 'FLG'
+  write(*, FMT=021) 'PRB', 'NO', 'NP', 'INEQ', 'EQ', 'F', 'FEAS', &
+       'PROB', 'FEVAL', 'FLG'
      
-     write(*, FMT=022) prob, n - np, np, mi, me, f, feas, &
-                       p, fcnt, flag
+  write(*, FMT=022) prob, n - np, np, mi, me, f, feas, &
+       p, fcnt, flag
  
-  end if
-
   open(99, FILE='ccp.out')
 
   write(99, FMT=020) prob, n - np, np, mi, me, f, feas, p, fcnt, flag
