@@ -1,7 +1,7 @@
 program CCP
 
   use ccpdata, only: ABSERR, initialize, destroy, MU, CORR, RELERR, &
-                     set_seed
+                     set_seed, fromfile
 
   implicit none
 
@@ -9,31 +9,38 @@ program CCP
   integer :: flag,ftype,i,me,mi,n,np,fcnt,prob
   logical :: verbose
   real(8) :: epsfeas,epsopt,f,p,feas,plim,npfrac
+  character(80) :: filename
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
+  filename = 'tests/probability/problem.txt'
+
   ! Read the seed
 
-  read(*,*) prob
+  prob = -1
 
-  npfrac = 1.0D0 / 2.0D0
+  ! read(*,*) prob
 
-  n  = 4
+  ! npfrac = 1.0D0 / 2.0D0
 
-  np = INT(n * npfrac)
+  ! n  = 4
 
-  me = 0
+  ! np = INT(n * npfrac)
 
-  mi = 10
+  ! me = 0
 
-  plim = 8.0D-01
+  ! mi = 10
 
-  allocate(x(n),l(n),u(n))
+  ! plim = 8.0D-01
+
+  ! allocate(x(n),l(n),u(n))
 
   call set_seed(12345678 + prob)
 
-  call initialize(n, np, mi, x, l, u, plim)
+!!$  call initialize(n, np, mi, x, l, u, plim)
+
+  call fromfile(n, np, mi, x, l, u, plim, filename)
 
   ! Call the solver
 

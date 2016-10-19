@@ -9,7 +9,7 @@ module ccpdata
   ! Sparsity rate
   real(8), parameter :: SPRATE = 1.0D-01
   ! Penalization term for the chance constraint
-  real(8), parameter :: PEN = 1.0D+04
+  real(8), parameter :: PEN = 1.0D+02
 
   ! Relative error for subroutine MVNDST
   real(8), parameter :: RELERR = 1.0D-05
@@ -413,6 +413,152 @@ contains
     deallocate(A, b, c, corr, mu, pA, cA)
 
   end subroutine destroy
+
+  ! ---------------------------------------------------------- !
+  ! ---------------------------------------------------------- !
+
+  subroutine fromfile(n, np_, mi, x, l, u, plim_, filename)
+
+    implicit none
+
+    ! LOCAL SCALARS
+
+    integer :: n, np_, mi
+    real(8) :: plim_
+
+    ! ARRAY ARGUMENTS
+
+    real(8), allocatable :: l(:), u(:), x(:)
+    character(80) :: filename
+
+    ! LOCAL SCALARS
+
+    integer :: i, j, lin, col, nnzA, pos
+    real(8) :: val
+
+    ! LOCAL ARRAYS
+
+    real(8), allocatable :: T(:,:)
+
+    intent(in ) :: filename
+    intent(out) :: n, np_, mi, l, u, x, plim_
+
+    open(99, FILE=filename)
+
+    ! Initialize parameters
+
+    read(99,*) n, mi, np_, plim_
+
+    m = mi
+
+    np = np_
+
+    plim = plim_
+
+    read(99,*) nnzA
+
+    ! Initialize module objects
+
+    allocate(b(m), c(n), corr((np - 1) * np / 2), mu(np), &
+             T(m, n), A(nnzA), pA(m + 1), cA(nnzA), l(n), &
+             u(n), x(n))
+
+    ! Load sparse A
+
+    T(:,:) = 0.0D0
+
+    do i = 1,nnzA
+
+       read(99, *) lin, col, val
+
+       T(lin,col) = val
+
+    end do
+
+    pA(1) = 1
+    
+    do i = 1, m
+
+       pos = pA(i)
+
+       do j = 1, n
+
+          if ( T(i,j) .ne. 0.0D0 ) then
+
+             A(pos) = T(i,j)
+
+             cA(pos) = j
+
+             pos = pos + 1
+
+          end if
+
+       end do
+
+       pA(i + 1) = pos
+
+    end do
+
+    ! Load b
+
+    do i = 1, m
+
+       read(99, *) b(i)
+
+    end do
+
+    ! Load l and u
+
+    do i = 1, n
+
+       read(99, *) l(i)
+
+    end do
+
+    do i = 1, n
+
+       read(99, *) u(i)
+
+    end do
+
+    ! Load initial x
+
+    do i = 1, n
+
+       read(99, *) x(i)
+
+    end do
+
+    ! Load mu
+
+    do i = 1, np
+
+       read(99, *) mu(i)
+    
+    end do
+
+    ! Load c
+
+    do i = 1, n
+
+       read(99, *) c(i)
+
+    end do
+
+    ! Load sigma
+
+    do i = 1, (np * (np - 1) / 2)
+
+       read(99, *) corr(i)
+
+    end do
+
+    close(99)
+
+    deallocate(T)
+
+  end subroutine fromfile
+  
 
   ! ---------------------------------------------------------- !
   ! ---------------------------------------------------------- !
