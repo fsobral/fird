@@ -1,7 +1,7 @@
 program CCP
 
   use ccpdata, only: ABSERR, initialize, destroy, MU, CORR, RELERR, &
-                     set_seed, fromfile
+                     set_seed, fromfile, PEN
 
   implicit none
 
@@ -56,12 +56,13 @@ program CCP
 
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
-  if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, p, &
-       fcnt, flag
+  if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, &
+       f - PEN * (plim - p), p, fcnt, flag
 
   open(99, FILE='ccp.out')
 
-  write(99, FMT=020) prob, n, np, mi, f, feas, p, fcnt, flag
+  write(99, FMT=020) prob, n, np, mi, f, feas, f - PEN * (plim - p), &
+       p, fcnt, flag
 
   close(99)
 
@@ -71,8 +72,8 @@ program CCP
 
   ! NON-EXECUTABLE STATEMENTS
 
-020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,F10.8,1X,I10, &
-           I3)
+020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,1PE15.8,1X, &
+         0PF10.8,1X,I10,I3)
 
 contains
 
@@ -173,13 +174,17 @@ contains
     ! LOCAL SCALARS
     integer :: i
 
-    flag = 1
+    flag = - 1
 
     ! Penalize the probability
 
     call evalprob(np, x, mu, corr, ABSERR, RELERR, f, flag)
 
     if ( flag .ne. 0 ) then
+
+       write(*,*) 'Error: MVNDST returned', flag
+
+       flag = - 1
 
        return
 
