@@ -28,7 +28,7 @@ program CCP
 
   ! np = INT(n * npfrac)
 
-  ! me = 0
+  me = 0
 
   ! mi = 10
 
@@ -61,7 +61,8 @@ program CCP
 
   open(99, FILE='ccp.out')
 
-  write(99, FMT=020) prob, n, np, mi, f, feas, f - PEN * (plim - p), &
+  write(99, FMT=020) prob, n, np, mi, f, feas, &
+       f - PEN * max(0.0D0, plim - p) ** 2.0D0, &
        p, fcnt, flag
 
   close(99)
@@ -190,7 +191,7 @@ contains
 
     end if
 
-    f = PEN * (plim - f)
+    f = PEN * max(0.0D0, plim - f) ** 2.0D0
 
     ! Quadratic term
 
