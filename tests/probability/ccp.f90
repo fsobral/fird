@@ -14,7 +14,7 @@ program CCP
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
-  filename = 'tests/probability/problem.txt'
+  filename = 'tests/probability/problem2.txt'
 
   ! Read the seed
 
@@ -49,7 +49,7 @@ program CCP
   epsfeas = 1.0D-8
   epsopt  = 1.0D-4
 
-  ftype = 2
+  ftype = 1
 
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
@@ -57,7 +57,7 @@ program CCP
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
   if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, &
-       f - PEN * (plim - p) ** 2.0D0, p, fcnt, flag
+       f - PEN * max(0.0D0, plim - p) ** 2.0D0, p, fcnt, flag
 
   open(99, FILE='ccp.out')
 
