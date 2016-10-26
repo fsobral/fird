@@ -57,7 +57,7 @@ program CCP
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
   if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, &
-       f - PEN * (plim - p), p, fcnt, flag
+       f - PEN * (plim - p) ** 2.0D0, p, fcnt, flag
 
   open(99, FILE='ccp.out')
 

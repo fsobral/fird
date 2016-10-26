@@ -9,7 +9,7 @@ module ccpdata
   ! Sparsity rate
   real(8), parameter :: SPRATE = 1.0D-01
   ! Penalization term for the chance constraint
-  real(8), parameter :: PEN = 1.0D+04
+  real(8), parameter :: PEN = 1.0D+08
 
   ! Relative error for subroutine MVNDST
   real(8), parameter :: RELERR = 1.0D-04
