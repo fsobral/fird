@@ -470,7 +470,7 @@ contains
 1000 FORMAT(/,'PHASE 0',/,7('-'),/,/,'FEASIBILITY =',36X,D23.8,/, &
          'NEW POINT',/,3(1X,D23.8))
 1001 FORMAT(/,'PHASE 1',/,7('-'),/)
-1002 FORMAT(3X,'(RE)BUILDING MODEL from scratch.',/, &
+1002 FORMAT(/,3X,'(RE)BUILDING MODEL from scratch.',/, &
          3X,5X,'RHO =',45X,D12.5,/,               &
          3X,5X,'Delta =',43X,D12.5,/,             &
          3X,5X,'Objective function =',19X,D23.8,/,&
@@ -485,8 +485,8 @@ contains
          3X,5X,'Function evaluations =',30X,I10)
 1004 FORMAT(5X,'Objective function =',24X,D23.8)
 1005 FORMAT(/,'REMOVING sampling point',1X,I4,'.')
-1006 FORMAT(5X,'Objective function (at trial point) =',&
-         7X,D23.8)
+1006 FORMAT(3X,5X,'Objective function (at trial point) =',&
+         2X,D23.8)
 
 
 1020 FORMAT(/,3X,'Solution was found!',/)
