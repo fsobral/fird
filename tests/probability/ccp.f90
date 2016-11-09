@@ -6,41 +6,59 @@ program CCP
   implicit none
 
   ! LOCAL SCALARS
-  integer :: flag,ftype,i,me,mi,n,np,fcnt,prob
+  integer :: flag, ftype, i, me, mi, n, np, fcnt, prob, stat
   logical :: verbose
-  real(8) :: epsfeas,epsopt,f,p,feas,plim,npfrac
-  character(80) :: filename
+  real(8) :: epsfeas, epsopt, f, p, feas, plim, npfrac
+  character(200) :: filename
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
-  filename = 'tests/probability/problem2.txt'
+  call GETARG(1, filename)
 
-  ! Read the seed
+  ! Verify if the argument is a filename or a problem number
 
-  prob = -1
+  open(99, FILE = filename, STATUS = "old", IOSTAT = stat)
 
-  ! read(*,*) prob
+  if ( stat .eq. 0 ) then
 
-  ! npfrac = 1.0D0 / 2.0D0
+     close(99)
 
-  ! n  = 4
+     prob = -1
 
-  ! np = INT(n * npfrac)
+     me = 0
 
-  me = 0
+     call set_seed(12345678)
 
-  ! mi = 10
+     call fromfile(n, np, mi, x, l, u, plim, filename)
 
-  ! plim = 8.0D-01
+  else
 
-  ! allocate(x(n),l(n),u(n))
+     ! Read the seed
 
-  call set_seed(12345678 + prob)
+     write(*, *) 'Write the number of a problem or just a seed'
 
-!!$  call initialize(n, np, mi, x, l, u, plim)
+     read(*, *) prob
 
-  call fromfile(n, np, mi, x, l, u, plim, filename)
+     npfrac = 1.0D0 / 2.0D0
+
+     n  = 4
+
+     np = INT(n * npfrac)
+
+     me = 0
+
+     mi = 10
+
+     plim = 8.0D-01
+     
+     allocate(x(n),l(n),u(n))
+  
+     call set_seed(12345678 + prob)
+
+     call initialize(n, np, mi, x, l, u, plim)
+
+  end if
 
   ! Call the solver
 

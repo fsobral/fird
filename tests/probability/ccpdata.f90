@@ -429,7 +429,7 @@ contains
     ! ARRAY ARGUMENTS
 
     real(8), allocatable :: l(:), u(:), x(:)
-    character(80) :: filename
+    character(200) :: filename
 
     ! LOCAL SCALARS
 
