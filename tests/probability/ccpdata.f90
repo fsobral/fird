@@ -29,10 +29,23 @@ module ccpdata
   ! PRIVATE SCALARS
 
   integer :: initial_seed
+  real(8) :: epsfeas
 
-  private :: initial_seed
+  private :: initial_seed, epsfeas
 
 contains
+
+  ! ---------------------------------------------------------- !
+  ! ---------------------------------------------------------- !
+  
+  subroutine set_epsfeas(ep)
+
+    ! SCALAR ARGUMENTS
+    real(8), intent(in) :: ep
+
+    epsfeas = ep
+
+  end subroutine set_epsfeas
 
   ! ---------------------------------------------------------- !
   ! ---------------------------------------------------------- !

@@ -1,7 +1,7 @@
 program CCP
 
   use ccpdata, only: ABSERR, initialize, destroy, MU, CORR, RELERR, &
-                     set_seed, fromfile, PEN
+                     set_seed, set_epsfeas, fromfile, PEN
 
   implicit none
 
@@ -64,10 +64,13 @@ program CCP
 
   verbose = .true.
 
-  epsfeas = 1.0D-8
+  epsfeas = 1.0D-4
+
   epsopt  = 1.0D-4
 
-  ftype = 1
+  call set_epsfeas(epsfeas)
+
+  ftype = 2
 
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
@@ -75,12 +78,12 @@ program CCP
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
   if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, &
-       f - PEN * max(0.0D0, plim - p) ** 2.0D0, p, fcnt, flag
+       f - PEN * max(epsfeas, plim - p) ** 2.0D0, p, fcnt, flag
 
   open(99, FILE='ccp.out')
 
   write(99, FMT=020) prob, n, np, mi, f, feas, &
-       f - PEN * max(0.0D0, plim - p) ** 2.0D0, &
+       f - PEN * max(epsfeas, plim - p) ** 2.0D0, &
        p, fcnt, flag
 
   close(99)
@@ -209,7 +212,7 @@ contains
 
     end if
 
-    f = PEN * max(0.0D0, plim - f) ** 2.0D0
+    f = PEN * max(epsfeas, plim - f) ** 2.0D0
 
     ! Quadratic term
 
