@@ -5,7 +5,13 @@ install:
 lib: mvndstpack.o ccpdata.o unbiased_correlation.o
 	ar cr libprobability.a $^
 
+hslib: mvndstpack.o hsccpdata.o hsfuncs.o
+	ar cr libprobability.a $^
+
 mvndstpack.o: mvndstpack.f
+	gfortran -c $< -o $@
+
+hsfuncs.o: hsfuncs.f
 	gfortran -c $< -o $@
 
 %.o: %.f90

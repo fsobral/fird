@@ -1,39 +1,64 @@
 program CCP
 
   use ccpdata, only: ABSERR, initialize, destroy, MU, CORR, RELERR, &
-                     set_seed
+                     set_seed, fromfile, PEN
 
   implicit none
 
   ! LOCAL SCALARS
-  integer :: flag,ftype,i,me,mi,n,np,fcnt,prob
+  integer :: flag, ftype, i, me, mi, n, np, fcnt, prob, stat
   logical :: verbose
-  real(8) :: epsfeas,epsopt,f,p,feas,plim,npfrac
+  real(8) :: epsfeas, epsopt, f, p, feas, plim, npfrac
+  character(200) :: filename
 
   ! LOCAL ARRAYS
   real(8), allocatable :: l(:), u(:), x(:)
 
-  ! Read the seed
+  call GETARG(1, filename)
 
-  read(*,*) prob
+  ! Verify if the argument is a filename or a problem number
 
-  npfrac = 1.0D0 / 2.0D0
+  open(99, FILE = filename, STATUS = "old", IOSTAT = stat)
 
-  n  = 4
+  if ( stat .eq. 0 ) then
 
-  np = INT(n * npfrac)
+     close(99)
 
-  me = 0
+     prob = -1
 
-  mi = 10
+     me = 0
 
-  plim = 8.0D-01
+     call set_seed(12345678)
 
-  allocate(x(n),l(n),u(n))
+     call fromfile(n, np, mi, x, l, u, plim, filename)
 
-  call set_seed(12345678 + prob)
+  else
 
-  call initialize(n, np, mi, x, l, u, plim)
+     ! Read the seed
+
+     write(*, *) 'Write the number of a problem or just a seed'
+
+     read(*, *) prob
+
+     npfrac = 1.0D0 / 2.0D0
+
+     n  = 4
+
+     np = INT(n * npfrac)
+
+     me = 0
+
+     mi = 10
+
+     plim = 8.0D-01
+     
+     allocate(x(n),l(n),u(n))
+  
+     call set_seed(12345678 + prob)
+
+     call initialize(n, np, mi, x, l, u, plim)
+
+  end if
 
   ! Call the solver
 
@@ -42,19 +67,21 @@ program CCP
   epsfeas = 1.0D-8
   epsopt  = 1.0D-4
 
-  ftype = 2
+  ftype = 1
 
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
-  if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, p, &
-       fcnt, flag
+  if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, &
+       f - PEN * max(0.0D0, plim - p) ** 2.0D0, p, fcnt, flag
 
   open(99, FILE='ccp.out')
 
-  write(99, FMT=020) prob, n, np, mi, f, feas, p, fcnt, flag
+  write(99, FMT=020) prob, n, np, mi, f, feas, &
+       f - PEN * max(0.0D0, plim - p) ** 2.0D0, &
+       p, fcnt, flag
 
   close(99)
 
@@ -64,8 +91,8 @@ program CCP
 
   ! NON-EXECUTABLE STATEMENTS
 
-020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,F10.8,1X,I10, &
-           I3)
+020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,1PE15.8,1X, &
+         0PF10.8,1X,I10,I3)
 
 contains
 
@@ -166,7 +193,7 @@ contains
     ! LOCAL SCALARS
     integer :: i
 
-    flag = 1
+    flag = - 1
 
     ! Penalize the probability
 
@@ -174,11 +201,15 @@ contains
 
     if ( flag .ne. 0 ) then
 
+       write(*,*) 'Error: MVNDST returned', flag
+
+       flag = - 1
+
        return
 
     end if
 
-    f = PEN * (plim - f)
+    f = PEN * max(0.0D0, plim - f) ** 2.0D0
 
     ! Quadratic term
 

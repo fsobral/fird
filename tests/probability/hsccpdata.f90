@@ -1,25 +1,23 @@
-module ccpdata
+module hsccpdata
 
   implicit none
 
   ! PARAMETERS
 
-  ! Number of observations in order to build the correlation matrix
-  integer, parameter :: NOBS = 5
   ! Sparsity rate
   real(8), parameter :: SPRATE = 1.0D-01
   ! Penalization term for the chance constraint
-  real(8), parameter :: PEN = 1.0D+08
+  real(8), parameter :: PEN = 1.0D+04
 
   ! Relative error for subroutine MVNDST
-  real(8), parameter :: RELERR = 1.0D-04
+  real(8), parameter :: RELERR = 1.0D-05
   ! Absolute error for subroutine MVNDST
-  real(8), parameter :: ABSERR = 1.0D-04
+  real(8), parameter :: ABSERR = 1.0D-08
   
   ! COMMON ARRAYS
 
   integer, allocatable :: cA(:), pA(:)
-  real(8), allocatable :: A(:), b(:), c(:), corr(:), mu(:)
+  real(8), allocatable :: A(:), c(:), corr(:), mu(:)
 
   ! COMMON SCALARS
 
@@ -52,7 +50,7 @@ contains
   ! ---------------------------------------------------------- !
   ! ---------------------------------------------------------- !
   
-  subroutine initialize(n, np_, mi, x, l, u, plim_)
+  subroutine initialize(np_, mi, x, l, u, plim_)
 
     ! This subroutine randomly initializes the structure needed by the
     ! Chance Constrained Problem.
@@ -60,13 +58,13 @@ contains
     implicit none
 
     ! SCALAR ARGUMENTS
-    integer :: n, np_, mi
+    integer :: np_, mi
     real(8) :: plim_
 
     ! ARRAY ARGUMENTS
-    real(8) :: l(n), u(n), x(n)
+    real(8) :: l(np_), u(np_), x(np_)
 
-    intent(in ) :: n, np_, mi, plim_
+    intent(in ) :: np_, mi, plim_
     intent(out) :: l, u, x
 
     ! INTERFACES
@@ -123,8 +121,8 @@ contains
 
     ! Initialize module objects
 
-    allocate(b(m), c(n), corr((np - 1) * np / 2), mu(np), &
-             mObs(np, np), A(n * m), pA(m + 1), cA(n * m))
+    allocate(c(np), corr((np - 1) * np / 2), mu(np), &
+             mObs(np, np), A(np * m), pA(m + 1), cA(np * m))
 
     ! Randomly generates vector 'c'
     
@@ -136,14 +134,6 @@ contains
 
     end do
 
-    do i = np + 1, n
-
-       call random_number(randnum)
-
-       c(i) = - 1.0D+01 + 2.0D+01 * randnum
-
-    end do
-
     ! Randomly generates sparse matrix 'A' in vector form
 
     pA(1) = 1
@@ -152,7 +142,7 @@ contains
 
        pos = pA(i)
 
-       do j = 1, n
+       do j = 1, np
 
           call random_number(randnum)
 
@@ -160,7 +150,7 @@ contains
 
              call random_number(A(pos))
 
-             if ( j .le. np ) A(pos) = - abs(A(pos))
+             A(pos) = - abs(A(pos))
 
              cA(pos) = j
 
@@ -196,32 +186,6 @@ contains
 
     end do
 
-    do i = np + 1, n
-
-       call random_number(randnum)
-
-       x(i) = - 1.0D+01 + 2.0D+01 * randnum
-
-       l(i) = - 1.0D+01
-
-       u(i) =   1.0D+01
-
-    end do
-
-    ! Generate feasible right hand side 'b'
-
-    do i = 1, m
-
-       b(i) = 0.0D0
-
-       do j = pA(i), pA(i + 1) - 1
-
-          b(i) = b(i) + x(cA(j)) * A(j)
-
-       end do
-
-    end do
-
     ! Randomly generates correlation matrix 'corr', which is
     ! simmetric, definite positive and has 1's in the diagonal (in
     ! vector form)
@@ -241,46 +205,6 @@ contains
        end do
 
     end do
-
-!!$    pi  = acos(-1.0D0)
-!!$
-!!$    do j = 1, np
-!!$
-!!$       do i = 1, NOBS, 2
-!!$
-!!$          call random_number(u1)
-!!$          
-!!$          call random_number(u2)
-!!$
-!!$          mObs(i,j) = sqrt(- 2.0D0 * log(u1)) * cos(2.0D0 * pi * u2)
-!!$          
-!!$          if ( i + 1 .le. NOBS ) then
-!!$                
-!!$             mObs(i + 1,j) = sqrt(- 2.0D0 * log(u1)) * sin(2.0D0 * pi * u2)
-!!$
-!!$          end if
-!!$
-!!$       end do
-!!$
-!!$    end do
-!!$
-!!$    do j = 1, np
-!!$
-!!$       tmpA => mObs(:,j)
-!!$
-!!$       do i = 1, j - 1
-!!$
-!!$          tmpB => mObs(:,i)
-!!$
-!!$          call unbiased_correlation(NOBS, tmpA, tmpB, 1.0D0, 0, &
-!!$               corr(i + (j - 1) * (j - 2) / 2), t, nover)
-!!$
-!!$          !write(*,*) (tmpA(k), k = 1,NOBS)
-!!$          write(*,*) i, j, corr(i + (j - 1) * (j - 2) / 2)
-!!$
-!!$       end do
-!!$
-!!$    end do
 
     deallocate(mObs, seed)
     
@@ -410,215 +334,8 @@ contains
   
   subroutine destroy()
 
-    deallocate(A, b, c, corr, mu, pA, cA)
+    deallocate(A, c, corr, mu, pA, cA)
 
   end subroutine destroy
 
-  ! ---------------------------------------------------------- !
-  ! ---------------------------------------------------------- !
-
-  subroutine fromfile(n, np_, mi, x, l, u, plim_, filename)
-
-    implicit none
-
-    ! LOCAL SCALARS
-
-    integer :: n, np_, mi
-    real(8) :: plim_
-
-    ! ARRAY ARGUMENTS
-
-    real(8), allocatable :: l(:), u(:), x(:)
-    character(200) :: filename
-
-    ! LOCAL SCALARS
-
-    integer :: i, j, lin, col, nnzA, pos
-    real(8) :: val
-
-    ! LOCAL ARRAYS
-
-    real(8), allocatable :: T(:,:)
-
-    intent(in ) :: filename
-    intent(out) :: n, np_, mi, l, u, x, plim_
-
-    open(99, FILE=filename)
-
-    ! Initialize parameters
-
-    read(99,*) n, mi, np_, plim_
-
-    m = mi
-
-    np = np_
-
-    plim = plim_
-
-    read(99,*) nnzA
-
-    ! Initialize module objects
-
-    allocate(b(m), c(n), corr((np - 1) * np / 2), mu(np), &
-             T(m, n), A(nnzA), pA(m + 1), cA(nnzA), l(n), &
-             u(n), x(n))
-
-    ! Load sparse A
-
-    T(:,:) = 0.0D0
-
-    do i = 1,nnzA
-
-       read(99, *) lin, col, val
-
-       T(lin,col) = val
-
-    end do
-
-    pA(1) = 1
-    
-    do i = 1, m
-
-       pos = pA(i)
-
-       do j = 1, n
-
-          if ( T(i,j) .ne. 0.0D0 ) then
-
-             A(pos) = T(i,j)
-
-             cA(pos) = j
-
-             pos = pos + 1
-
-          end if
-
-       end do
-
-       pA(i + 1) = pos
-
-    end do
-
-    ! Load b
-
-    do i = 1, m
-
-       read(99, *) b(i)
-
-    end do
-
-    ! Load l and u
-
-    do i = 1, n
-
-       read(99, *) l(i)
-
-    end do
-
-    do i = 1, n
-
-       read(99, *) u(i)
-
-    end do
-
-    ! Load initial x
-
-    do i = 1, n
-
-       read(99, *) x(i)
-
-    end do
-
-    ! Load mu
-
-    do i = 1, np
-
-       read(99, *) mu(i)
-    
-    end do
-
-    ! Load c
-
-    do i = 1, n
-
-       read(99, *) c(i)
-
-    end do
-
-    ! Load sigma
-
-    do i = 1, (np * (np - 1) / 2)
-
-       read(99, *) corr(i)
-
-    end do
-
-    close(99)
-
-    deallocate(T)
-
-  end subroutine fromfile
-  
-
-  ! ---------------------------------------------------------- !
-  ! ---------------------------------------------------------- !
-
-  subroutine tofile(n, np, mi, x, l, u, filename)
-
-    implicit none
-
-    ! SCALAR ARGUMENTS
-    integer :: n, np, mi
-
-    ! ARRAY ARGUMENTS
-    real(8)       :: l(n), u(n), x(n)
-    character(80) :: filename
-
-    intent(in ) :: filename, n, np, mi, l, u, x
-
-    ! LOCAL SCALARS
-    integer :: i, j
-
-    ! LOCAL ARRAYS
-    real(8) :: tmpA(n)
-
-    open(99, FILE=filename)
-
-    write(99, FMT=010) n, np, mi
-
-    do i = 1, mi
-
-       do j = 1, n
-
-          tmpA(j) = 0.0D0
-
-       end do
-
-       do j = pA(i), pA(i + 1) - 1
-
-          tmpA(cA(j)) = A(j)
-
-       end do
-
-       do j = 1, n
-       
-          write(99,FMT=020) tmpA(j)
-
-       end do
-
-       write(99,*)
-
-    end do
-
-    write(99,*)
-
-    close(99)
-
-    ! NON-EXECUTABLE STATEMENTS
-
-010 FORMAT(I5,1X,I5,1X,I5,/)
-020 FORMAT(1P,E15.8)
-
-  end subroutine tofile
-
-end module ccpdata
+end module hsccpdata
