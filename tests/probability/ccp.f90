@@ -60,6 +60,30 @@ program CCP
 
   end if
 
+  ! Create basic output files, in case of external failure
+
+  open(99, FILE='ccp.out')
+
+  if ( prob .eq. -1 ) then
+
+     write(99, FMT=021) filename, n, np, mi, 1.0D+20, 1.0D+20, &
+          1.0D+20, 1.0D+20, -1, -1
+
+  else
+
+     write(99, FMT=020) prob, n, np, mi, 1.0D+20, 1.0D+20, &
+          1.0D+20, 1.0D+20, -1, -1
+
+  end if
+
+  close(99)
+
+  open(99, FILE = 'ccp.sol')
+
+  write(99, FMT=022) (x(i), i = 1, n)
+
+  close(99)
+
   ! Call the solver
 
   verbose = .false.
