@@ -6,7 +6,7 @@ if (test $# = 1 ) then
 
     PPATH=$1;
 
-    ulimit -St 60 # 30 min of CPU time per problem
+    ulimit -St 600 # 30 min of CPU time per problem
 
     rm -f analysis-all
 
