@@ -82,9 +82,19 @@ program CCP
 
   open(99, FILE='ccp.out')
 
-  write(99, FMT=020) prob, n, np, mi, f, feas, &
-       f - PEN * max(epsfeas, plim - p) ** 2.0D0, &
-       p, fcnt, flag
+  if ( prob .eq. -1 ) then
+
+     write(99, FMT=021) filename, n, np, mi, f, feas, &
+          f - PEN * max(epsfeas, plim - p) ** 2.0D0, &
+          p, fcnt, flag
+
+  else
+
+     write(99, FMT=020) prob, n, np, mi, f, feas, &
+          f - PEN * max(epsfeas, plim - p) ** 2.0D0, &
+          p, fcnt, flag
+
+  end if
 
   close(99)
 
@@ -95,6 +105,8 @@ program CCP
   ! NON-EXECUTABLE STATEMENTS
 
 020 FORMAT(I10,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,1PE15.8,1X, &
+         0PF10.8,1X,I10,I3)
+021 FORMAT(A100,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,1PE15.8,1X, &
          0PF10.8,1X,I10,I3)
 
 contains
