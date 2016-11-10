@@ -36,7 +36,7 @@ if (test $# = 1 ) then
 
 	EPROBNAME=`echo ${TMP2} | sed 's/[.].*$//'`
 
-	mv ccp.sol p_solutions/sol${EPROBNAME}.txt;
+	mv ccp.sol p_solutions/sol_${EPROBNAME}.txt;
 
     done;
 
