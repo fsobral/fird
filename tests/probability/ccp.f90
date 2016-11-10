@@ -62,7 +62,7 @@ program CCP
 
   ! Call the solver
 
-  verbose = .true.
+  verbose = .false.
 
   epsfeas = 1.0D-4
 
@@ -98,6 +98,14 @@ program CCP
 
   close(99)
 
+  ! Save solution
+
+  open(99, FILE = 'ccp.sol')
+
+  write(99, FMT=022) (x(i), i = 1, n)
+
+  close(99)
+
   deallocate(x,l,u)
 
   call destroy()
@@ -108,6 +116,7 @@ program CCP
          0PF10.8,1X,I10,I3)
 021 FORMAT(A100,1X,I5,1X,I5,1X,I5,1X,E15.8,1X,E15.8,1X,1PE15.8,1X, &
          0PF10.8,1X,I10,I3)
+022 FORMAT((1PE23.16))
 
 contains
 
