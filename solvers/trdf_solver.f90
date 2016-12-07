@@ -202,8 +202,16 @@ contains
     else
 
        ! First outer iteration. Allocates the whole structure.
-       ! TODO: Maybe we have to deallocate it?
        ! TODO: Test allocation errors
+
+       if ( allocated(Y_)      ) deallocate(Y_)
+       if ( allocated(FF_)     ) deallocate(FF_)
+       if ( allocated(Q_)      ) deallocate(Q_)
+       if ( allocated(H_)      ) deallocate(H_)
+       if ( allocated(XBASE_A) ) deallocate(XBASE_A)
+       if ( allocated(GOPT_A)  ) deallocate(GOPT_A)
+       if ( allocated(HQ_A)    ) deallocate(HQ_A)
+
        allocate(Y_(NPT,N),FF_(NPT),Q_(1+N+N*(N+1)/2),H_(NPT+N+1,NPT+N+1))
        allocate(XBASE_A(N),GOPT_A(N),HQ_A(N * (N + 1) / 2))
 
