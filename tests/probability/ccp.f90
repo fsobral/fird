@@ -6,7 +6,7 @@ program CCP
   implicit none
 
   ! LOCAL SCALARS
-  integer :: flag, ftype, i, me, mi, n, np, fcnt, prob, stat
+  integer :: flag, ftype, i, me, mi, n, np, fcnt, prob, stat, ftcnt
   logical :: verbose
   real(8) :: epsfeas, epsopt, f, p, feas, plim, npfrac
   character(200) :: filename
@@ -84,39 +84,64 @@ program CCP
 
   close(99)
 
-  ! Call the solver
+  ! Call the solver - First run
 
   verbose = .false.
 
-  epsfeas = 1.0D-4
+  epsfeas = 1.0D-04
 
-  epsopt  = 1.0D-4
+  epsopt  = 1.0D-01
 
   call set_epsfeas(epsfeas)
+
+  PEN = 1.0D+03
 
   ftype = 2
 
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
+  ftcnt = fcnt
+
+  ! Call the solver - Second run
+
+  verbose = .false.
+
+  epsfeas = 1.0D-04
+
+  epsopt  = 1.0D-04
+
+  call set_epsfeas(epsfeas)
+
+  PEN = 1.0D+10
+
+  ftype = 2
+
+  call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
+       epsfeas,epsopt,f,feas,fcnt,flag)
+
+  ftcnt = ftcnt + fcnt
+
+  ! Print status
+
   call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
 
   if ( verbose ) write(*, FMT=020) prob, n, np, mi, f, feas, &
-       f - PEN * max(epsfeas, plim - p) ** 2.0D0, p, fcnt, flag
+       f - PEN * max(0.0D0, plim - p - epsfeas) ** 2.0D0, p, ftcnt, flag
 
   open(99, FILE='ccp.out')
 
   if ( prob .eq. -1 ) then
 
      write(99, FMT=021) filename, n, np, mi, f, feas, &
-          f - PEN * max(epsfeas, plim - p) ** 2.0D0, &
-          p, fcnt, flag
+          f - PEN * max(0.0D0, plim - p - epsfeas) ** 2.0D0, &
+          p, ftcnt, flag
 
   else
 
      write(99, FMT=020) prob, n, np, mi, f, feas, &
-          f - PEN * max(epsfeas, plim - p) ** 2.0D0, &
-          p, fcnt, flag
+          f - PEN * max(0.0D0, plim - p - epsfeas) ** 2.0D0, &
+          p, ftcnt, flag
 
   end if
 
@@ -257,7 +282,7 @@ contains
 
     end if
 
-    f = PEN * max(epsfeas, plim - f) ** 2.0D0
+    f = PEN * max(0.0D0, plim - f - epsfeas) ** 2.0D0
 
     ! Quadratic term
 

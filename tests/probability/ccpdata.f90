@@ -8,9 +8,6 @@ module ccpdata
   integer, parameter :: NOBS = 5
   ! Sparsity rate
   real(8), parameter :: SPRATE = 1.0D-01
-  ! Penalization term for the chance constraint
-  real(8), parameter :: PEN = 1.0D+08
-
   ! Relative error for subroutine MVNDST
   real(8), parameter :: RELERR = 1.0D-04
   ! Absolute error for subroutine MVNDST
@@ -22,6 +19,9 @@ module ccpdata
   real(8), allocatable :: A(:), b(:), c(:), corr(:), mu(:)
 
   ! COMMON SCALARS
+
+  ! Penalization term for the chance constraint
+  real(8) :: PEN = 1.0D+01
 
   integer :: m, np
   real(8) :: plim
