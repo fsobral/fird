@@ -1,22 +1,49 @@
 program derivatives_cost
 
-  integer :: np, flag
-  real(8) :: start, finish, p, ABSERR, RELERR
+  use ccpdata, only: MU, CORR, ABSERR, RELERR, set_seed, initialize, &
+                     destroy
 
-  real(8), allocatable :: MU(:), CORR(:), x(:)
+  integer :: np, flag, nruns
+  real(8) :: start, finish, p, ttime
+
+  real(8), allocatable :: x(:), l(:), u(:)
 
   write(*,*) "This program tests the cost of derivatives"
   write(*,*) "of CCP functions"
 
-  np = 10
+  nruns = 10
 
-  allocate(x(np))
+  do i = 1, 5
 
-  call CPU_TIME(start)
+     do j = 1, nruns
 
-  call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
+        np = 10 * i
 
-  call CPU_TIME(finish)
+        allocate(x(np),l(np),u(np))
+
+        call set_seed(12345678 + i * j)
+
+        call initialize(np, np, 0, x, l, u, 0.0D0)
+
+        call CPU_TIME(start)
+
+        call evalprob(np, x, MU, CORR, ABSERR, RELERR, p, flag)
+        
+        call CPU_TIME(finish)
+
+        deallocate(x, l, u)
+
+        call destroy()
+
+        ttime = ttime + (finish - start)
+
+     end do
+
+     write(*,FMT=0001) i, (ttime / nruns)
+
+  end do
+
+  0001 FORMAT(I5,1X,F25.16)
 
 contains
 
