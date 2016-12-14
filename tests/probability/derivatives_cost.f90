@@ -3,11 +3,14 @@ program derivatives_cost
   use ccpdata, only: MU, CORR, ABSERR, RELERR, set_seed, initialize, &
                      destroy
 
+  integer, parameter :: dims(10) = (/2, 3, 4, 5, 10, 15, 20, 30, 40, 50/)
+
   integer :: np, flag, nruns
   real(8) :: start, finish, p, dfttime, fttime
 
   real(8), allocatable :: x(:), l(:), u(:), dp(:)
 
+  write(*,*)
   write(*,*) "This program tests the cost of derivatives"
   write(*,*) "of CCP functions"
 
@@ -15,7 +18,7 @@ program derivatives_cost
 
   write(*,FMT=0002) 'DIM', 'F TIME', 'G TIME', 'RELATION'
 
-  do i = 1, 5
+  do i = 1, size(dims)
 
      fttime = 0.0D0
 
@@ -23,7 +26,7 @@ program derivatives_cost
 
      do j = 1, nruns
 
-        np = 10 * i
+        np = dims(i)
 
         allocate(x(np),l(np),u(np),dp(np))
 
@@ -214,6 +217,14 @@ contains
           call mvndst(n - 1, l, u, infty, ncorr, &
                5000 * (n - 1) * (n - 1) * (n - 1), &
                ABSERR, RELERR, error, dp(k), flag)
+
+          if ( flag .ne. 0 ) then
+
+             write(*,*) 'MVNDST Returned nonzero flag!'
+             
+             stop
+
+          end if
 
           dp(k) = dp(k) * ff
 
