@@ -16,3 +16,6 @@ analysis-all
 doc/**
 !doc/*.tex
 !doc/Makefile
+
+# Test executables
+tests/probability/derivatives_cost
