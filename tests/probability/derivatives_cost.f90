@@ -4,24 +4,32 @@ program derivatives_cost
                      destroy
 
   integer :: np, flag, nruns
-  real(8) :: start, finish, p, ttime
+  real(8) :: start, finish, p, dfttime, fttime
 
-  real(8), allocatable :: x(:), l(:), u(:)
+  real(8), allocatable :: x(:), l(:), u(:), dp(:)
 
   write(*,*) "This program tests the cost of derivatives"
   write(*,*) "of CCP functions"
 
   nruns = 10
 
+  write(*,FMT=0002) 'DIM', 'F TIME', 'G TIME', 'RELATION'
+
   do i = 1, 5
+
+     fttime = 0.0D0
+
+     dfttime = 0.0D0
 
      do j = 1, nruns
 
         np = 10 * i
 
-        allocate(x(np),l(np),u(np))
+        allocate(x(np),l(np),u(np),dp(np))
 
         call set_seed(12345678 + i * j)
+
+        ! Function
 
         call initialize(np, np, 0, x, l, u, 0.0D0)
 
@@ -31,19 +39,31 @@ program derivatives_cost
         
         call CPU_TIME(finish)
 
-        deallocate(x, l, u)
+        fttime = fttime + (finish - start)
+
+        ! Derivatives
+
+        call CPU_TIME(start)
+
+        call evaldprob(np, x, MU, CORR, ABSERR, RELERR, dp, flag)
+        
+        call CPU_TIME(finish)
+
+        dfttime = dfttime + (finish - start)
+
+        deallocate(x, l, u, dp)
 
         call destroy()
 
-        ttime = ttime + (finish - start)
-
      end do
 
-     write(*,FMT=0001) i, (ttime / nruns)
+     write(*,FMT=0001) np, (fttime / nruns), (dfttime / nruns), &
+                       (dfttime / fttime)
 
   end do
 
-  0001 FORMAT(I5,1X,F25.16)
+  0002 FORMAT(/,A5,1X,A11,1X,A11,1X,A11)
+  0001 FORMAT(I5,1X,F11.8,1X,F11.8,1X,F11.8)
 
 contains
 
@@ -82,7 +102,7 @@ contains
     real(8) :: ABSERR, RELERR
 
     ! ARRAY ARGUMENTS
-    real(8) :: CORR((n - 1) * (n - 2) / 2), dp(n), MU(n), x(n)
+    real(8) :: CORR(n * (n - 1) / 2), dp(n), MU(n), x(n)
 
     intent(in ) :: ABSERR, CORR, MU, n, RELERR, x
     intent(out) :: dp, flag
@@ -107,30 +127,56 @@ contains
     end interface
 
     ! LOCAL SCALARS
-    integer :: i, j, k, pos
-    real(8) :: error, p, ff
+    integer :: i, j, k, pos, pi, pj
+    real(8) :: error, ff
 
     ! LOCAL ARRAYS
-    real(8) :: l(n - 1), u(n - 1), ncorr((n - 2) * (n - 3) / 2)
+    real(8) :: l(n - 1), u(n - 1), ncorr((n - 1) * (n - 2) / 2)
     integer :: infty(n - 1)
+
+    flag = 0
 
     do k = 1,n
 
        ff = fgauss(x(k), MU(k), 1.0D0)
 
-       if ( ff .lt. 1.0D-60 ) then
+       dp(k) = 0.0D0
+
+       if ( ff .gt. 1.0D-60 ) then
 
           pos = 1
 
           do j = 1, n
 
-             if ( j .eq. k ) continue
+             if ( j .eq. k ) cycle
 
              do i = 1, j - 1
 
-                if ( i .eq. k ) continue
+                if ( i .eq. k ) cycle
+
+                if ( i .lt. k ) then
+
+                   pi = i + (k - 1) * (k - 2) / 2
+
+                else
+
+                   pi = k + (i - 1) * (i - 2) / 2
+
+                end if
+
+                if ( j .lt. k ) then
+
+                   pj = j + (k - 1) * (k - 2) / 2
+
+                else
+
+                   pj = k + (j - 1) * (j - 2) / 2
+
+                end if
 
                 ncorr(pos) = corr(i + (j - 1) * (j - 2) / 2)
+
+                ncorr(pos) = ncorr(pos) - corr(pi) * corr(pj)
 
                 pos = pos + 1
 
@@ -141,15 +187,19 @@ contains
           ! Affine transformation.
           ! Only need to shift 'mu'
 
-          pos = 1
-          
           do i = 1, n
 
-             if ( j .eq. k ) continue
+             if ( i .lt. k ) then
 
-             u(pos) = x(i) - MU(i)
+                u(i) = x(i) - (MU(i) + (x(k) - MU(k)) * &
+                                 corr(i + (k - 1) * (k - 2) / 2))
 
-             pos = pos + 1
+             else if ( i .gt. k ) then
+
+                u(i - 1) = x(i) - (MU(i) + (x(k) - MU(k)) * &
+                                   corr(k + (i - 1) * (i - 2) / 2))
+
+             end if
 
           end do
 
@@ -163,7 +213,9 @@ contains
 
           call mvndst(n - 1, l, u, infty, ncorr, &
                5000 * (n - 1) * (n - 1) * (n - 1), &
-               ABSERR, RELERR, error, p, flag)
+               ABSERR, RELERR, error, dp(k), flag)
+
+          dp(k) = dp(k) * ff
 
        end if
 
@@ -188,7 +240,7 @@ contains
     real(8) :: ABSERR, p, RELERR
 
     ! ARRAY ARGUMENTS
-    real(8) :: CORR((n - 1) * (n - 2) / 2), MU(n), x(n)
+    real(8) :: CORR(n * (n - 1) / 2), MU(n), x(n)
 
     intent(in ) :: ABSERR, CORR, MU, n, RELERR, x
     intent(out) :: p, flag
