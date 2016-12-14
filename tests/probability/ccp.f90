@@ -186,7 +186,7 @@ contains
     real(8) :: ABSERR, p, RELERR
 
     ! ARRAY ARGUMENTS
-    real(8) :: CORR((n - 1) * (n - 2) / 2), MU(n), x(n)
+    real(8) :: CORR((n - 1) * n / 2), MU(n), x(n)
 
     intent(in ) :: ABSERR, CORR, MU, n, RELERR, x
     intent(out) :: p, flag
