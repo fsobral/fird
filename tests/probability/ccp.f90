@@ -84,9 +84,13 @@ program CCP
 
   close(99)
 
-  ! Call the solver - First run
+  ! General options
 
   verbose = .false.
+
+  ftype = 2
+
+  ! Call the solver - First run
 
   epsfeas = 1.0D-04
 
@@ -96,8 +100,6 @@ program CCP
 
   PEN = 1.0D+03
 
-  ftype = 2
-
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
 
@@ -105,7 +107,20 @@ program CCP
 
   ! Call the solver - Second run
 
-  verbose = .false.
+  epsfeas = 1.0D-04
+
+  epsopt  = 1.0D-01
+
+  call set_epsfeas(epsfeas)
+
+  PEN = 1.0D+05
+
+  call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
+       epsfeas,epsopt,f,feas,fcnt,flag)
+
+  ftcnt = ftcnt + fcnt
+
+  ! Call the solver - Third run
 
   epsfeas = 1.0D-04
 
@@ -113,9 +128,7 @@ program CCP
 
   call set_epsfeas(epsfeas)
 
-  PEN = 1.0D+10
-
-  ftype = 2
+  PEN = 1.0D+09
 
   call fird(n,x,l,u,me,mi,evalf,evalc,evaljac,verbose,ftype, &
        epsfeas,epsopt,f,feas,fcnt,flag)
