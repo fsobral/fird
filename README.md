@@ -1,10 +1,13 @@
 FIRD - Filter Inexact Restoration Derivative-free algorithm
 ===========================================================
 
-This algorithm is based on the working paper of [Ferreira, Karas,
-Sachine,
-Sobral](http://www.optimization-online.org/DB_FILE/2015/07/5024.pdf)
-(*Submitted*).
+This algorithm is based on the paper 
+
+> Ferreira, P. S., Karas, E. W., Sachine, M., & Sobral,
+> F. N. C. (2017). [Global convergence of a derivative-free inexact
+> restoration filter algorithm for nonlinear
+> programming](http://doi.org/10.1080/02331934.2016.1263629). Optimization,
+> 66(2), 271–292.
 
 `FIRD` is able to solve general derivative-free constrained
 optimization problems in which the derivatives of the objective
